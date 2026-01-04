@@ -1,7 +1,7 @@
 {
-  "buildCommand": "cd packages/desktop && bun run build",
+  "buildCommand": "bun install && cd packages/desktop && bun run build",
   "outputDirectory": "packages/desktop/dist",
-  "installCommand": "bun install",
+  "installCommand": "curl -fsSL https://bun.sh/install | bash && export BUN_INSTALL=\"$HOME/.bun\" && export PATH=\"$BUN_INSTALL/bin:$PATH\" && bun install",
   "framework": null,
   "headers": [
     {
