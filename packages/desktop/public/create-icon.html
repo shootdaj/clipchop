@@ -1,0 +1,18 @@
+<canvas id="c" width="192" height="192"></canvas>
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+ctx.fillStyle = '#a855f7';
+ctx.fillRect(0, 0, 192, 192);
+ctx.fillStyle = 'white';
+ctx.font = 'bold 120px Arial';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText('C', 96, 96);
+c.toBlob(b => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = 'icon-192.png';
+  a.click();
+});
+</script>
