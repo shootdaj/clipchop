@@ -14,7 +14,7 @@
     "react-native": "0.83.1",
     "@react-native/new-app-screen": "0.83.1",
     "react-native-safe-area-context": "^5.5.2",
-    "ffmpeg-kit-react-native": "^6.0.2",
+    "react-native-ffmpeg": "^0.5.2",
     "react-native-document-picker": "^9.3.1",
     "react-native-fs": "^2.20.0"
   },

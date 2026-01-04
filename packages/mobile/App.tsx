@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
-import { FFmpegKit, ReturnCode } from 'ffmpeg-kit-react-native';
+import { RNFFmpeg } from 'react-native-ffmpeg';
 import RNFS from 'react-native-fs';
 import { calculateSegmentBoundaries, formatDuration } from './src/lib/video-utils';
 
@@ -51,21 +51,16 @@ function App(): React.JSX.Element {
   };
 
   const getVideoMetadata = async (uri: string): Promise<{duration: number, width: number, height: number}> => {
-    const session = await FFmpegKit.execute(`-i "${uri}"`);
-    const output = await session.getOutput();
+    const info = await RNFFmpeg.getMediaInformation(uri);
+    const duration = info.getMediaProperties()?.duration || 0;
+    const streams = info.getStreams();
+    const videoStream = streams?.find((s: any) => s.type === 'video');
     
-    const durationMatch = output.match(/Duration: (\d{2}):(\d{2}):(\d{2}\.\d{2})/);
-    const videoMatch = output.match(/Video:.* (\d+)x(\d+)/);
-    
-    const hours = parseInt(durationMatch?.[1] || '0');
-    const minutes = parseInt(durationMatch?.[2] || '0');
-    const seconds = parseFloat(durationMatch?.[3] || '0');
-    const duration = hours * 3600 + minutes * 60 + seconds;
-    
-    const width = parseInt(videoMatch?.[1] || '0');
-    const height = parseInt(videoMatch?.[2] || '0');
-    
-    return { duration, width, height };
+    return {
+      duration: parseFloat(duration) / 1000,
+      width: videoStream?.width || 0,
+      height: videoStream?.height || 0,
+    };
   };
 
   const splitVideo = async () => {
@@ -93,17 +88,12 @@ function App(): React.JSX.Element {
         const seg = segments[i];
         const outputPath = `${outputDir}/${seg.filename}`;
 
-        const command = `-i "${video.uri}" -ss ${seg.startTime} -t ${seg.duration} -c:v h264_mediacodec -b:v 2M -c:a aac -metadata:s:v rotate=0 -y "${outputPath}"`;
+        const command = `-i "${video.uri}" -ss ${seg.startTime} -t ${seg.duration} -c:v libx264 -preset ultrafast -c:a aac -metadata:s:v rotate=0 -y "${outputPath}"`;
 
-        const session = await FFmpegKit.execute(command);
-        const returnCode = await session.getReturnCode();
-
-        if (!ReturnCode.isSuccess(returnCode)) {
-          const session2 = await FFmpegKit.execute(`-i "${video.uri}" -ss ${seg.startTime} -t ${seg.duration} -c:v libx264 -preset ultrafast -c:a aac -metadata:s:v rotate=0 -y "${outputPath}"`);
-          const rc2 = await session2.getReturnCode();
-          if (!ReturnCode.isSuccess(rc2)) {
-            throw new Error(`Segment ${i + 1} failed`);
-          }
+        const result = await RNFFmpeg.execute(command);
+        
+        if (result !== 0) {
+          throw new Error(`Segment ${i + 1} failed with code ${result}`);
         }
 
         setProgress(((i + 1) / segments.length) * 100);
