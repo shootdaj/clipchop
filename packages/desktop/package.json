@@ -1,0 +1,44 @@
+{
+  "name": "@clipchop/desktop",
+  "version": "0.1.0",
+  "main": "dist-electron/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "electron:dev": "concurrently \"cross-env BROWSER=none vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "electron:build": "tsc -p tsconfig.electron.json && node -e \"require('fs').writeFileSync('dist-electron/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\" && tsc -b && vite build && electron-builder",
+    "electron:build:mac": "bun run electron:build -- --mac",
+    "electron:build:win": "bun run electron:build -- --win",
+    "electron:build:linux": "bun run electron:build -- --linux"
+  },
+  "dependencies": {
+    "@clipchop/shared": "workspace:*",
+    "@electron/remote": "^2.1.3",
+    "@tailwindcss/vite": "^4.1.18",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "fluent-ffmpeg": "^2.1.3",
+    "lucide-react": "^0.562.0",
+    "motion": "^12.23.26",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwind-merge": "^3.4.0",
+    "tailwindcss": "^4.1.18"
+  },
+  "devDependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@ffprobe-installer/ffprobe": "^2.1.2",
+    "@types/fluent-ffmpeg": "^2.1.27",
+    "@types/node": "^25.0.3",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
+    "typescript": "~5.6.2",
+    "vite": "^6.0.5",
+    "wait-on": "^9.0.3"
+  }
+}
