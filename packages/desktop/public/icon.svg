@@ -22,13 +22,4 @@
   <!-- Play button -->
   <polygon points="220,200 220,276 300,238" fill="url(#grad2)"/>
 
-  <!-- Timeline bar at bottom -->
-  <rect x="80" y="370" width="352" height="24" rx="12" fill="#1a1a24"/>
-
-  <!-- Timeline progress -->
-  <rect x="80" y="370" width="180" height="24" rx="12" fill="url(#grad1)"/>
-
-  <!-- Timeline scrubber -->
-  <circle cx="260" cy="382" r="18" fill="url(#grad2)"/>
-
 </svg>
