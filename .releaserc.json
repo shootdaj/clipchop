@@ -11,6 +11,12 @@
       }
     ],
     [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "node -e \"const fs=require('fs');const p='packages/desktop/package.json';const pkg=JSON.parse(fs.readFileSync(p));pkg.version='${nextRelease.version}';fs.writeFileSync(p,JSON.stringify(pkg,null,2)+'\\n')\""
+      }
+    ],
+    [
       "@semantic-release/git",
       {
         "assets": ["package.json", "packages/desktop/package.json", "CHANGELOG.md"],
