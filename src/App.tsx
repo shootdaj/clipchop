@@ -4,7 +4,8 @@ import { VideoUploader } from '@/components/video-uploader'
 import { VideoInfo } from '@/components/video-info'
 import { DurationSelector } from '@/components/duration-selector'
 import { SplitPreview } from '@/components/split-preview'
-import { useVideoSplitter } from '@/hooks/use-video-splitter-electron'
+import { DesktopAppBanner } from '@/components/desktop-app-banner'
+import { useVideoSplitter } from '@/hooks/use-video-splitter-hybrid'
 import { cn } from '@/lib/utils'
 
 // Fluid spring configs - tuned for liquid feel
@@ -77,8 +78,12 @@ function App() {
     }
   }, [progress.percent, progress.status, startTime])
 
-  const handleFileSelect = async () => {
-    await loadVideo()
+  const handleFileSelect = async (file?: File) => {
+    if (file) {
+      await loadVideo(file as any)
+    } else {
+      await loadVideo()
+    }
   }
 
   const handleSplit = async () => {
@@ -168,6 +173,8 @@ function App() {
         </motion.header>
 
         <main className="space-y-6">
+          <DesktopAppBanner />
+          
           <AnimatePresence mode="wait">
             {!metadata ? (
               /* Upload state */
@@ -405,18 +412,30 @@ function App() {
                           whileHover={{ scale: 1.02, y: -2 }}
                           whileTap={{ scale: 0.98, y: 2 }}
                           onClick={() => {
-                            if (segments.length > 0 && segments[0].outputPath) {
-                              const outputPath = segments[0].outputPath
-                              const outputDir = outputPath.substring(0, outputPath.lastIndexOf('/'))
-                              if (window.electron) {
+                            if (window.electron) {
+                              const seg = segments[0] as any
+                              if (seg && seg.outputPath) {
+                                const outputPath = seg.outputPath
+                                const outputDir = outputPath.substring(0, outputPath.lastIndexOf('/'))
                                 console.log('Files saved to:', outputDir)
                                 alert(`Files saved to:\n${outputDir}`)
                               }
+                            } else {
+                              segments.forEach((seg: any) => {
+                                if (seg.blob) {
+                                  const url = URL.createObjectURL(seg.blob)
+                                  const a = document.createElement('a')
+                                  a.href = url
+                                  a.download = seg.filename
+                                  a.click()
+                                  URL.revokeObjectURL(url)
+                                }
+                              })
                             }
                           }}
                           className="flex-1 py-4 px-6 rounded-2xl font-semibold btn-3d text-white glow-purple"
                         >
-                          Show Files
+                          {window.electron ? 'Show Files' : 'Download All'}
                         </motion.button>
                         <motion.button
                           whileHover={{ scale: 1.02, y: -2 }}
@@ -459,7 +478,11 @@ function App() {
           transition={{ delay: 0.8 }}
           className="mt-16 text-center text-sm text-muted-foreground/50"
         >
-          All processing happens in your browser. No uploads.
+          {typeof window !== 'undefined' && window.electron ? (
+            <>⚡ Desktop App - GPU Accelerated</>
+          ) : (
+            <>All processing happens in your browser. No uploads.</>
+          )}
         </motion.footer>
       </div>
     </div>

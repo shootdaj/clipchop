@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { cn } from '@/lib/utils'
 
 interface VideoUploaderProps {
-  onFileSelect: () => void
+  onFileSelect: ((file?: File) => void) | (() => void)
   disabled?: boolean
 }
 
@@ -23,8 +23,9 @@ const bouncySpring = {
 }
 
 export function VideoUploader({ onFileSelect, disabled }: VideoUploaderProps) {
-  const [isDragOver] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
+  const isElectron = typeof window !== 'undefined' && window.electron !== undefined
 
   const handleClick = useCallback(async () => {
     if (disabled) return
@@ -36,6 +37,53 @@ export function VideoUploader({ onFileSelect, disabled }: VideoUploaderProps) {
     }
   }, [disabled, onFileSelect])
 
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    if (isElectron) return
+    e.preventDefault()
+    e.stopPropagation()
+    if (!disabled) setIsDragOver(true)
+  }, [disabled, isElectron])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    if (isElectron) return
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+  }, [isElectron])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    if (isElectron) return
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+
+    if (disabled) return
+
+    const files = e.dataTransfer.files
+    if (files.length > 0) {
+      const file = files[0]
+      if (file.type.startsWith('video/')) {
+        setIsProcessing(true)
+        setTimeout(() => {
+          onFileSelect(file)
+          setIsProcessing(false)
+        }, 100)
+      }
+    }
+  }, [disabled, onFileSelect, isElectron])
+
+  const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isElectron) return
+    const files = e.target.files
+    if (files && files.length > 0) {
+      setIsProcessing(true)
+      setTimeout(() => {
+        onFileSelect(files[0])
+        setIsProcessing(false)
+      }, 100)
+    }
+  }, [onFileSelect, isElectron])
+
   return (
     <motion.div
       layout
@@ -44,8 +92,11 @@ export function VideoUploader({ onFileSelect, disabled }: VideoUploaderProps) {
       transition={fluidSpring}
       className="w-full"
     >
-      <motion.button
-        onClick={handleClick}
+      <motion.div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onClick={isElectron ? handleClick : undefined}
         animate={{
           scale: isDragOver ? 1.02 : 1,
           y: isDragOver ? -4 : 0,
@@ -53,7 +104,6 @@ export function VideoUploader({ onFileSelect, disabled }: VideoUploaderProps) {
         whileHover={{ scale: disabled ? 1 : 1.01, y: disabled ? 0 : -2 }}
         whileTap={{ scale: disabled ? 1 : 0.99 }}
         transition={fluidSpring}
-        disabled={disabled}
         className={cn(
           'relative flex flex-col items-center justify-center',
           'min-h-[360px] w-full',
@@ -63,6 +113,15 @@ export function VideoUploader({ onFileSelect, disabled }: VideoUploaderProps) {
           isDragOver && 'glow-purple'
         )}
       >
+        {!isElectron && (
+          <input
+            type="file"
+            accept="video/*"
+            onChange={handleFileInput}
+            disabled={disabled}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed z-10"
+          />
+        )}
         {/* Inner glow effect when dragging */}
         <AnimatePresence>
           {isDragOver && (
@@ -186,10 +245,14 @@ export function VideoUploader({ onFileSelect, disabled }: VideoUploaderProps) {
                     isDragOver ? 'gradient-text' : 'text-foreground'
                   )}
                 >
-                  Select your video
+                  {isElectron ? 'Select your video' : (isDragOver ? 'Release to upload' : 'Drop your video here')}
                 </motion.p>
                 <p className="text-muted-foreground">
-                  Click to <span className="text-primary font-semibold">browse files</span>
+                  {isElectron ? (
+                    <>Click to <span className="text-primary font-semibold">browse files</span></>
+                  ) : (
+                    <>or <span className="text-primary font-semibold hover:underline cursor-pointer">browse files</span></>
+                  )}
                 </p>
               </div>
 
@@ -217,7 +280,7 @@ export function VideoUploader({ onFileSelect, disabled }: VideoUploaderProps) {
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.button>
+      </motion.div>
     </motion.div>
   )
 }
