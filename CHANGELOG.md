@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/shootdaj/clipchop/compare/v1.0.0...v1.0.1) (2026-01-04)
+
+
+### Bug Fixes
+
+* Update release config for monorepo version sync ([fcf531c](https://github.com/shootdaj/clipchop/commit/fcf531c9a5fbbb89f8497bd19e5aaa1f3bc47a6c))
+
 # 1.0.0 (2026-01-04)
 
 
