@@ -86,7 +86,7 @@
 - 📱 Code ready, waiting for maintained FFmpeg package
 
 #### Deployment:
-- ✅ Web deployed to Vercel: https://dist-alpha-woad.vercel.app
+- ✅ Web deployed to Vercel: https://desktop-seven-lake.vercel.app
 - ✅ PWA support with manifest and service worker
 - ✅ GitHub Actions for Electron releases
 - ⚠️ Vercel GitHub Action needs secrets (using manual deploy for now)

@@ -38,7 +38,7 @@ Video splitter app that cuts videos into smaller durations for social media (Ins
 - ✅ Local development: `bun run dev:desktop` from root
 
 **Web App (Vercel)**:
-- ✅ Deployed to https://dist-alpha-woad.vercel.app
+- ✅ Deployed to https://desktop-seven-lake.vercel.app
 - ✅ PWA support with manifest and service worker
 - ✅ Works on Chrome 102+ desktop browsers
 - ⚠️ VERY SLOW (30-60 min for 4K videos) - WebCodecs limitation
@@ -241,7 +241,7 @@ bun run build
 
 ### Production URLs
 
-**Web App**: https://dist-alpha-woad.vercel.app  
+**Web App**: https://desktop-seven-lake.vercel.app  
 **Desktop Releases**: https://github.com/shootdaj/clipchop/releases  
 **Mobile**: N/A (blocked)
 
