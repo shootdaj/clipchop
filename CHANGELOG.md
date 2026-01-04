@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/shootdaj/clipchop/compare/v1.1.0...v1.1.1) (2026-01-04)
+
+
+### Bug Fixes
+
+* Simplify app icon - remove timeline scrubber ([72c107a](https://github.com/shootdaj/clipchop/commit/72c107a4773db770f1b7d75517b2ecbefcddd84e))
+
 # [1.1.0](https://github.com/shootdaj/clipchop/compare/v1.0.1...v1.1.0) (2026-01-04)
 
 
