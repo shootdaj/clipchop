@@ -5,6 +5,7 @@ import { VideoInfo } from '@/components/video-info'
 import { DurationSelector } from '@/components/duration-selector'
 import { SplitPreview } from '@/components/split-preview'
 import { BrowserCompatibility } from '@/components/browser-compatibility'
+import { InstallPrompt } from '@/components/install-prompt'
 import { useVideoSplitter } from '@/hooks/use-video-splitter-hybrid'
 import { cn } from '@/lib/utils'
 
@@ -108,7 +109,9 @@ function App() {
   const canSplit = metadata && selectedDuration && segments.length > 0 && !isSplitting
 
   return (
-    <div className="min-h-screen gradient-bg p-4 md:p-8 relative overflow-hidden">
+    <>
+      <InstallPrompt />
+      <div className="min-h-screen gradient-bg p-4 md:p-8 relative overflow-hidden">
       {/* Animated floating orbs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         {/* Large purple orb - top left */}
@@ -486,6 +489,7 @@ function App() {
         </motion.footer>
       </div>
     </div>
+    </>
   )
 }
 
