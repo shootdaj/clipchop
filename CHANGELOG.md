@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/shootdaj/clipchop/compare/v1.2.0...v1.2.1) (2026-01-04)
+
+
+### Bug Fixes
+
+* add electron-builder config for GitHub releases ([d866afe](https://github.com/shootdaj/clipchop/commit/d866afee178115d8517817fc7eabf9f5e4e5a26e))
+
 # [1.2.0](https://github.com/shootdaj/clipchop/compare/v1.1.3...v1.2.0) (2026-01-04)
 
 
