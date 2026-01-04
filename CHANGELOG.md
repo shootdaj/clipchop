@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/shootdaj/clipchop/compare/v1.1.2...v1.1.3) (2026-01-04)
+
+
+### Bug Fixes
+
+* Remove top install prompt, keep bottom one ([9cd21ac](https://github.com/shootdaj/clipchop/commit/9cd21acda4cf0c60a50269d52922f24434ce9810))
+
 ## [1.1.2](https://github.com/shootdaj/clipchop/compare/v1.1.1...v1.1.2) (2026-01-04)
 
 
