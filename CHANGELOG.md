@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/shootdaj/clipchop/compare/v1.2.1...v1.2.2) (2026-01-04)
+
+
+### Bug Fixes
+
+* add author email for Linux deb package ([8a51be1](https://github.com/shootdaj/clipchop/commit/8a51be15ebfc1d53e3d58776a2d8787a1465c337))
+
 ## [1.2.1](https://github.com/shootdaj/clipchop/compare/v1.2.0...v1.2.1) (2026-01-04)
 
 
