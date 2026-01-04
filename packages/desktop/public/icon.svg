@@ -14,12 +14,12 @@
   <rect x="16" y="16" width="480" height="480" rx="96" fill="#0a0a12"/>
 
   <!-- Video frame -->
-  <rect x="80" y="120" width="352" height="220" rx="24" fill="url(#grad1)"/>
+  <rect x="80" y="146" width="352" height="220" rx="24" fill="url(#grad1)"/>
 
   <!-- Screen area -->
-  <rect x="104" y="144" width="304" height="172" rx="12" fill="#0a0a12"/>
+  <rect x="104" y="170" width="304" height="172" rx="12" fill="#0a0a12"/>
 
   <!-- Play button -->
-  <polygon points="220,200 220,276 300,238" fill="url(#grad2)"/>
+  <polygon points="228,218 228,294 308,256" fill="url(#grad2)"/>
 
 </svg>
