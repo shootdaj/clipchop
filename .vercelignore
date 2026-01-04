@@ -1,0 +1,6 @@
+node_modules
+packages/mobile
+packages/desktop/node_modules
+packages/shared/node_modules
+.git
+*.log

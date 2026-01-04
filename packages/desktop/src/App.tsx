@@ -9,7 +9,7 @@ import { InstallPrompt } from '@/components/install-prompt'
 import { useVideoSplitter } from '@/hooks/use-video-splitter-hybrid'
 import { cn } from '@/lib/utils'
 
-// Fluid spring configs - tuned for liquid feel
+// Fluid spring configs - tuned for liquid feel (v2)
 const fluidSpring = {
   type: 'spring' as const,
   stiffness: 120,

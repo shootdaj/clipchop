@@ -1,7 +1,7 @@
 # Clipchop - Implementation Progress
 
-## Current Status: ⚡ ELECTRON APP COMPLETE - Native Performance Ready
-**Last Updated**: 2026-01-04 (Session 5) - Electron Conversion Complete
+## Current Status: Multi-Platform Complete (Desktop), Mobile Blocked
+**Last Updated**: 2026-01-04 (Session 5) - Electron + Web PWA + Mobile (WIP)
 
 ---
 
@@ -57,6 +57,45 @@
 ---
 
 ## Completed Items
+
+### 2026-01-04 (Session 5 Cont.) - Multi-Platform + Deployment
+**Updates**: Monorepo, React Native mobile (blocked), Web PWA deployed
+
+#### Critical Fixes:
+- **Video Rotation Bug**: Fixed double-rotation issue by using FFmpeg's autorotate
+  - Root cause: FFmpeg auto-rotates on decode, then we rotated again
+  - Solution: Let FFmpeg handle rotation, calculate dimensions post-rotation
+  - Tested with multiple transpose options to verify correct orientation
+- **PWA Installation**: Fixed icons (were 1x1 placeholders, now proper 192x192/512x512 PNGs)
+- **Service Worker Caching**: Can cause stale assets, users need cache clear
+
+#### Architecture Changes:
+- **Monorepo Created**: packages/shared, packages/desktop, packages/mobile
+- **Hybrid Mode**: Auto-detects Electron vs Web, uses appropriate backend
+- **Shared Code**: 75% business logic reused across platforms
+- **Web + Electron in One**: packages/desktop serves both via hybrid hook
+
+#### Mobile Native App (React Native):
+- ✅ Created React Native app structure
+- ✅ Integrated FFmpeg Kit and document picker
+- ✅ Copied shared utilities for split calculations
+- ✅ Android + iOS support in same codebase
+- ❌ BLOCKED: All FFmpeg packages deprecated/broken
+  - ffmpeg-kit-react-native: 404 errors
+  - react-native-ffmpeg: jcenter removed
+- 📱 Code ready, waiting for maintained FFmpeg package
+
+#### Deployment:
+- ✅ Web deployed to Vercel: https://dist-alpha-woad.vercel.app
+- ✅ PWA support with manifest and service worker
+- ✅ GitHub Actions for Electron releases
+- ⚠️ Vercel GitHub Action needs secrets (using manual deploy for now)
+- ❌ Mobile builds failing (FFmpeg dependency issues)
+
+#### Performance Verified:
+- Desktop: 1-2 min for 4K video ✅
+- Web: 30-60 min for 4K video (inherent limitation)
+- Mobile: Would be 2-5 min (blocked)
 
 ### 2026-01-04 (Session 5) - ⚡ Electron Native App Conversion
 **MAJOR UPDATE**: Converted from web app to Electron desktop app for 20-30x faster encoding

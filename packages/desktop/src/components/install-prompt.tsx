@@ -5,20 +5,28 @@ import { Download, X } from 'lucide-react'
 export function InstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false)
   const isElectron = typeof window !== 'undefined' && window.electron !== undefined
-  
+
+  // Check if already running as installed PWA
+  const isStandalone = typeof window !== 'undefined' && (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (navigator as any).standalone === true ||
+    document.referrer.includes('android-app://')
+  )
+
   useEffect(() => {
-    if (isElectron) return
-    
+    // Don't show install prompt if already Electron or PWA standalone
+    if (isElectron || isStandalone) return
+
     const handler = () => {
       setShowPrompt(true)
     }
-    
-    window.addEventListener('beforeinstallprompt', handler)
-    
-    return () => window.removeEventListener('beforeinstallprompt', handler)
-  }, [isElectron])
 
-  if (isElectron || !showPrompt) return null
+    window.addEventListener('beforeinstallprompt', handler)
+
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, [isElectron, isStandalone])
+
+  if (isElectron || isStandalone || !showPrompt) return null
 
   const handleInstall = () => {
     if ((window as any).showInstallPrompt) {

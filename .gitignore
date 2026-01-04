@@ -8,3 +8,5 @@ release
 *.local
 packages/mobile/bun.lock
 packages/mobile/package-lock.json
+.vercel
+.env*.local
