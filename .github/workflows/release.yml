@@ -86,10 +86,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: List release directory
-        run: ls -la release/ || echo "No release directory"
-        working-directory: packages/desktop
-
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
         with:
