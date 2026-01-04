@@ -25,27 +25,31 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
       
-      - name: Install dependencies
-        working-directory: packages/mobile
+      - name: Prepare mobile build
         run: |
-          rm -f ../package.json package-lock.json
-          npm install --legacy-peer-deps
+          cp -r packages/mobile /tmp/clipchop-mobile-build
+          cd /tmp/clipchop-mobile-build
+          rm -f package-lock.json
+      
+      - name: Install dependencies
+        working-directory: /tmp/clipchop-mobile-build
+        run: npm install --legacy-peer-deps
       
       - name: Build Android APK
-        working-directory: packages/mobile/android
+        working-directory: /tmp/clipchop-mobile-build/android
         run: ./gradlew assembleRelease
       
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          path: packages/mobile/android/app/build/outputs/apk/release/*.apk
+          path: /tmp/clipchop-mobile-build/android/app/build/outputs/apk/release/*.apk
       
       - name: Release Android
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: packages/mobile/android/app/build/outputs/apk/release/*.apk
+          files: /tmp/clipchop-mobile-build/android/app/build/outputs/apk/release/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   
@@ -61,18 +65,22 @@ jobs:
         with:
           node-version: '20'
       
-      - name: Install dependencies
-        working-directory: packages/mobile
+      - name: Prepare mobile build
         run: |
-          rm -f ../package.json package-lock.json
-          npm install --legacy-peer-deps
+          cp -r packages/mobile /tmp/clipchop-mobile-build
+          cd /tmp/clipchop-mobile-build
+          rm -f package-lock.json
+      
+      - name: Install dependencies
+        working-directory: /tmp/clipchop-mobile-build
+        run: npm install --legacy-peer-deps
       
       - name: Install Pods
-        working-directory: packages/mobile/ios
+        working-directory: /tmp/clipchop-mobile-build/ios
         run: pod install
       
       - name: Build iOS
-        working-directory: packages/mobile/ios
+        working-directory: /tmp/clipchop-mobile-build/ios
         run: |
           xcodebuild -workspace ClipchopAndroid.xcworkspace \
             -scheme ClipchopAndroid \
@@ -82,7 +90,7 @@ jobs:
             archive
       
       - name: Export IPA
-        working-directory: packages/mobile/ios
+        working-directory: /tmp/clipchop-mobile-build/ios
         run: |
           xcodebuild -exportArchive \
             -archivePath ClipchopAndroid.xcarchive \
@@ -93,13 +101,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ios-ipa
-          path: packages/mobile/ios/*.ipa
+          path: /tmp/clipchop-mobile-build/ios/*.ipa
       
       - name: Release iOS
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: packages/mobile/ios/*.ipa
+          files: /tmp/clipchop-mobile-build/ios/*.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
