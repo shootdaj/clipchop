@@ -1,3 +1,9 @@
+# ⚠️ AGENT: READ THIS FILE FIRST BEFORE ANY WORK ⚠️
+
+If you are starting a new session, **STOP** and read this entire file BEFORE doing anything else.
+
+---
+
 # Clipchop - Multi-Platform Video Splitter
 
 Video splitter app that cuts videos into smaller durations for social media (Instagram, TikTok, etc.)
