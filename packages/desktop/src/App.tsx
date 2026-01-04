@@ -488,7 +488,7 @@ function App() {
               <>All processing happens in your browser. No uploads.</>
             )}
           </div>
-          <div className="mt-2 text-xs">v{__APP_VERSION__}</div>
+          <div className="mt-2 text-xs">v{__APP_VERSION__} ({__GIT_SHA__})</div>
         </motion.footer>
       </div>
     </div>
