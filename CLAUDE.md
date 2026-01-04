@@ -90,10 +90,9 @@ clipchop/
 │       ├── ios/
 │       └── src/
 └── .github/workflows/   # CI/CD
-    ├── electron-release.yml      # Desktop builds
+    ├── release.yml               # Semantic version + Electron builds
     ├── mobile-release.yml        # Mobile builds (failing)
-    ├── github-pages.yml          # Web deployment
-    └── vercel-deploy.yml         # Web deployment (unused)
+    └── github-pages.yml          # Web deployment
 ```
 
 ### Platform Support Matrix
@@ -248,19 +247,22 @@ bun run build
 ### CI/CD Workflows
 
 **GitHub Actions**:
-- `.github/workflows/electron-release.yml` - Triggered by `v*` tags
+- `.github/workflows/release.yml` - Triggered on push to master, handles:
+  - Semantic versioning (auto-bumps version based on commit messages)
+  - Creates GitHub Release
+  - Builds Electron apps for macOS/Windows/Linux
+  - Uploads binaries to the release
 - `.github/workflows/mobile-release.yml` - Triggered by `mobile-v*` tags (failing)
 - `.github/workflows/github-pages.yml` - Triggered by push to master
-- `.github/workflows/vercel-deploy.yml` - (not used, manual deploy)
 
-**Manual Deployments**:
-```bash
-# Web to Vercel
-cd packages/desktop && bun run build && cd dist && vercel --prod --yes
+**Commit Message Conventions** (semantic-release):
+- `feat: description` → Minor version bump (1.0.0 → 1.1.0)
+- `fix: description` → Patch version bump (1.0.0 → 1.0.1)
+- `chore: description` → No version bump
 
-# Desktop release
-git tag v1.0.0 && git push origin v1.0.0
-```
+**Vercel Deployment**:
+- Git integration enabled - auto-deploys on push to master
+- Web URL: https://desktop-seven-lake.vercel.app
 
 ---
 
@@ -422,6 +424,7 @@ git push origin v1.0.0
 3. **Never guess at fixes** - use runtime evidence and tests
 4. **Vercel caching** - Users may need to clear cache to see updates
 5. **Module systems** - Be careful with CommonJS vs ESM in Electron
+6. **ALWAYS verify deployment before reporting done** - Never tell the user something is deployed or complete without checking the live URL or GitHub Actions status first. Use WebFetch, gh commands, or other tools to confirm.
 
 ---
 
