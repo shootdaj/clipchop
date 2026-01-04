@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/shootdaj/clipchop/compare/v1.1.1...v1.1.2) (2026-01-04)
+
+
+### Bug Fixes
+
+* Center app icon and update all icon sizes ([7fbb2eb](https://github.com/shootdaj/clipchop/commit/7fbb2eb09a5ebeaf7c1a5d0c2724ad4326c50ae9))
+
 ## [1.1.1](https://github.com/shootdaj/clipchop/compare/v1.1.0...v1.1.1) (2026-01-04)
 
 
