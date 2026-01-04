@@ -30,6 +30,24 @@
 
 ---
 
+## 📱 Platform Coverage
+
+**Desktop** (Electron):
+- macOS, Windows, Linux only
+- GPU acceleration, 20-30x faster
+- Download from GitHub Releases
+
+**Mobile** (Web):
+- Android Chrome, iOS Safari
+- Browser-based, slower but functional
+- Deployed on Vercel
+
+**Key Insight**: The hybrid approach covers ALL platforms!
+- Desktop users get fast native app
+- Mobile users use web version (works on Android per requirements)
+
+---
+
 ## 📦 What's Been Committed
 
 **Commit 1**: Electron Conversion

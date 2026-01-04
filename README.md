@@ -25,9 +25,31 @@ Fast, native desktop app for splitting videos into smaller segments. Perfect for
 - **Beautiful UI**: Modern 3D dark theme with fluid animations
 - **Privacy First**: All processing happens locally on your machine
 
+## Platform Support
+
+### Desktop App (Electron) - Fast
+- ✅ macOS 10.15+
+- ✅ Windows 10+
+- ✅ Linux (Ubuntu 18.04+)
+- ⚡ 20-30x faster with GPU acceleration
+
+### Web App (Browser) - Slow but Works Everywhere
+- ✅ Android (Chrome 102+)
+- ✅ iOS/Safari (limited support)
+- ✅ Any desktop browser with WebCodecs support
+- 🌐 No installation required
+
 ## Installation
 
-### Prerequisites
+### Desktop App
+
+Download from [GitHub Releases](https://github.com/yourusername/clipchop/releases)
+
+### Web App
+
+Visit [clipchop.vercel.app](https://clipchop.vercel.app) (or your domain)
+
+### Development
 
 - Node.js 18+ or Bun
 - macOS, Windows, or Linux
