@@ -27,7 +27,9 @@ jobs:
       
       - name: Install dependencies
         working-directory: packages/mobile
-        run: npm install --legacy-peer-deps
+        run: |
+          rm -f ../package.json package-lock.json
+          npm install --legacy-peer-deps
       
       - name: Build Android APK
         working-directory: packages/mobile/android
@@ -61,7 +63,9 @@ jobs:
       
       - name: Install dependencies
         working-directory: packages/mobile
-        run: npm install --legacy-peer-deps
+        run: |
+          rm -f ../package.json package-lock.json
+          npm install --legacy-peer-deps
       
       - name: Install Pods
         working-directory: packages/mobile/ios
