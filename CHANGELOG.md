@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/shootdaj/clipchop/compare/v1.1.3...v1.2.0) (2026-01-04)
+
+
+### Features
+
+* add Electron builds to release workflow ([13de901](https://github.com/shootdaj/clipchop/commit/13de901dacc1cfc36822ae9c03d33d7bd5d19ef3))
+
 ## [1.1.3](https://github.com/shootdaj/clipchop/compare/v1.1.2...v1.1.3) (2026-01-04)
 
 
