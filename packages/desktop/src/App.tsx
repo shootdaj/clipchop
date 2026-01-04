@@ -481,11 +481,14 @@ function App() {
           transition={{ delay: 0.8 }}
           className="mt-16 text-center text-sm text-muted-foreground/50"
         >
-          {typeof window !== 'undefined' && window.electron ? (
-            <>⚡ Desktop App - GPU Accelerated</>
-          ) : (
-            <>All processing happens in your browser. No uploads.</>
-          )}
+          <div>
+            {typeof window !== 'undefined' && window.electron ? (
+              <>⚡ Desktop App - GPU Accelerated</>
+            ) : (
+              <>All processing happens in your browser. No uploads.</>
+            )}
+          </div>
+          <div className="mt-2 text-xs">v{__APP_VERSION__}</div>
         </motion.footer>
       </div>
     </div>
