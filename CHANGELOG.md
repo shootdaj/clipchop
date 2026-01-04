@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/shootdaj/clipchop/compare/v1.0.1...v1.1.0) (2026-01-04)
+
+
+### Features
+
+* Add new video editor app icon ([d3f63ee](https://github.com/shootdaj/clipchop/commit/d3f63ee6900b8a3b0aa1095a6861fcb341ac05b9))
+
 ## [1.0.1](https://github.com/shootdaj/clipchop/compare/v1.0.0...v1.0.1) (2026-01-04)
 
 
