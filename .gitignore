@@ -7,3 +7,4 @@ release
 .vite
 *.local
 packages/mobile/bun.lock
+packages/mobile/package-lock.json
