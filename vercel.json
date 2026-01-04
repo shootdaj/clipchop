@@ -1,4 +1,8 @@
 {
+  "buildCommand": "cd packages/desktop && bun run build",
+  "outputDirectory": "packages/desktop/dist",
+  "installCommand": "bun install",
+  "framework": null,
   "headers": [
     {
       "source": "/(.*)",
