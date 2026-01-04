@@ -27,7 +27,7 @@ jobs:
         run: bun install
       
       - name: Build web version
-        run: bun run build
+        run: cd packages/desktop && bun run build
       
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
@@ -36,5 +36,6 @@ jobs:
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: '--prod'
-          working-directory: ./
+          working-directory: ./packages/desktop
+          vercel-project-path: ./packages/desktop
 
