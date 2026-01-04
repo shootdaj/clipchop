@@ -4,7 +4,6 @@ import { VideoUploader } from '@/components/video-uploader'
 import { VideoInfo } from '@/components/video-info'
 import { DurationSelector } from '@/components/duration-selector'
 import { SplitPreview } from '@/components/split-preview'
-import { DesktopAppBanner } from '@/components/desktop-app-banner'
 import { BrowserCompatibility } from '@/components/browser-compatibility'
 import { useVideoSplitter } from '@/hooks/use-video-splitter-hybrid'
 import { cn } from '@/lib/utils'
@@ -175,7 +174,6 @@ function App() {
 
         <main className="space-y-6">
           <BrowserCompatibility />
-          <DesktopAppBanner />
           
           <AnimatePresence mode="wait">
             {!metadata ? (
