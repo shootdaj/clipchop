@@ -3,25 +3,10 @@
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
-    "@semantic-release/changelog",
-    [
-      "@semantic-release/npm",
-      {
-        "npmPublish": false
-      }
-    ],
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "node -e \"const fs=require('fs');const p='packages/desktop/package.json';const pkg=JSON.parse(fs.readFileSync(p));pkg.version='${nextRelease.version}';fs.writeFileSync(p,JSON.stringify(pkg,null,2)+'\\n')\"",
         "publishCmd": "echo '${nextRelease.version}' > .semantic-release-version"
-      }
-    ],
-    [
-      "@semantic-release/git",
-      {
-        "assets": ["package.json", "packages/desktop/package.json", "CHANGELOG.md"],
-        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }
     ],
     "@semantic-release/github"

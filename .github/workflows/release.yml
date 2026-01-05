@@ -80,6 +80,13 @@ jobs:
         run: npm install --legacy-peer-deps
         working-directory: packages/desktop
 
+      - name: Inject version from release
+        run: |
+          VERSION="${{ needs.release.outputs.new_release_version }}"
+          echo "Injecting version: $VERSION"
+          node -e "const fs=require('fs');const p='package.json';const pkg=JSON.parse(fs.readFileSync(p));pkg.version='$VERSION';fs.writeFileSync(p,JSON.stringify(pkg,null,2)+'\n')"
+        working-directory: packages/desktop
+
       - name: Build Electron app
         run: npm run electron:build:${{ matrix.platform }}
         working-directory: packages/desktop
