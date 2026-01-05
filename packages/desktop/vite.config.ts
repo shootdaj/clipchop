@@ -17,10 +17,32 @@ const getGitSha = () => {
   }
 }
 
+// Get version - from env var (CI/CD), git tags, or fallback
+const getVersion = () => {
+  // CI/CD may set this environment variable
+  if (process.env.APP_VERSION) {
+    return process.env.APP_VERSION
+  }
+  // Try to get from git (works on Vercel)
+  try {
+    const tag = execSync('git describe --tags --abbrev=0 2>/dev/null').toString().trim()
+    if (tag && tag.startsWith('v') && !tag.includes('mobile')) {
+      return tag.slice(1)
+    }
+  } catch { /* no tags */ }
+  // Fallback: version from commit count
+  try {
+    const count = execSync('git rev-list --count HEAD').toString().trim()
+    return `1.3.${count}`
+  } catch {
+    return pkg.version
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   define: {
-    __APP_VERSION__: JSON.stringify(pkg.version),
+    __APP_VERSION__: JSON.stringify(getVersion()),
     __GIT_SHA__: JSON.stringify(getGitSha()),
   },
   plugins: [
