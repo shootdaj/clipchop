@@ -22,6 +22,16 @@ Video splitter app that cuts videos into smaller durations for social media (Ins
 4. **Update `PROGRESS.md`** - Log what you completed
 5. **Use TodoWrite** - Track in-session progress
 
+## ⚠️ DEPLOYMENT IS AUTOMATIC - DO NOT MANUALLY DEPLOY
+
+**NEVER run `vercel` commands manually.** Deployment is 100% automatic via GitHub Actions:
+
+1. **Push to master** → GitHub Actions triggers
+2. **CI/CD builds** → Electron apps for all platforms + Vercel web deployment
+3. **Done** → No manual intervention needed
+
+To deploy: Just `git push origin master` - that's it!
+
 ---
 
 ## Current Status (Session 7 - Jan 5, 2026)
@@ -278,11 +288,11 @@ bun run electron:build:mac    # Mac only
 bun run electron:build:win    # Windows only
 ```
 
-**Web**:
+**Web** (auto-deploys via CI/CD on push to master):
 ```bash
 cd packages/desktop
-bun run build
-# Deploy: cd dist && vercel --prod --yes
+bun run build  # For local testing only
+# DO NOT run vercel manually - deployment is automatic via GitHub Actions
 ```
 
 ### Running Tests
