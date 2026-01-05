@@ -135,7 +135,12 @@ export async function splitVideo(options: SplitOptions): Promise<string[]> {
   let videoCodec = 'libx264'
   let hwaccel: string | null = null
   let extraOptions: string[] = ['-preset', 'fast', '-crf', '23']
-  
+
+  // Force constant frame rate to fix VFR (Variable Frame Rate) videos from phones
+  // This duplicates/drops frames as needed to ensure smooth playback
+  const targetFps = Math.round(metadata.fps) || 30
+  const cfrOptions = ['-fps_mode', 'cfr', '-r', String(targetFps)]
+
   if (process.platform === 'darwin') {
     videoCodec = 'h264_videotoolbox'
     extraOptions = ['-b:v', maxResolution === 1280 ? '800k' : maxResolution === 1920 ? '1500k' : '5000k']
@@ -172,7 +177,7 @@ export async function splitVideo(options: SplitOptions): Promise<string[]> {
         .videoCodec(videoCodec)
         .audioCodec('aac')
         .audioBitrate('128k')
-        .outputOptions([...extraOptions, '-metadata:s:v', 'rotate=0'])
+        .outputOptions([...extraOptions, ...cfrOptions, '-metadata:s:v', 'rotate=0'])
       
       if (outputWidth !== baseWidth || outputHeight !== baseHeight) {
         command = command.size(`${outputWidth}x${outputHeight}`)
@@ -206,7 +211,7 @@ export async function splitVideo(options: SplitOptions): Promise<string[]> {
               .inputOptions(['-accurate_seek', `-ss ${startTime}`])
               .duration(duration)
               .videoCodec('libx264')
-              .outputOptions(['-preset', 'fast', '-crf', '23', '-metadata:s:v', 'rotate=0'])
+              .outputOptions(['-preset', 'fast', '-crf', '23', ...cfrOptions, '-metadata:s:v', 'rotate=0'])
               .audioCodec('aac')
               .audioBitrate('128k')
             
