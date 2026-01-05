@@ -117,6 +117,15 @@ export const getVideoBitrate = (maxResolution: number | null): number => {
   return 5000000 // 5 Mbps default
 }
 
+// Get throttle delay between chunks for mobile to prevent encoder overload
+// Based on Chrome WebCodecs best practices: https://developer.chrome.com/docs/web-platform/best-practices/webcodecs
+// When encoder queue builds up, video becomes choppy. Constant delays help prevent this.
+export const getMobileThrottleDelay = (isMobile: boolean): number => {
+  // Desktop: no throttling needed
+  // Mobile: 10ms delay between chunks to give encoder breathing room
+  return isMobile ? 10 : 0
+}
+
 // Validate segment timing accuracy
 export const validateSegmentTiming = (
   segments: SegmentCalculation[],

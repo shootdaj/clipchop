@@ -10,6 +10,7 @@ import {
   getH264ProfileCode,
   buildH264CodecString,
   getVideoBitrate,
+  getMobileThrottleDelay,
 } from './video-utils'
 
 describe('toMicroseconds', () => {
@@ -446,5 +447,15 @@ describe('getVideoBitrate', () => {
 
   it('returns 5 Mbps for Full Quality (null)', () => {
     expect(getVideoBitrate(null)).toBe(5000000)
+  })
+})
+
+describe('getMobileThrottleDelay', () => {
+  it('returns 10ms delay for mobile to prevent encoder overload', () => {
+    expect(getMobileThrottleDelay(true)).toBe(10)
+  })
+
+  it('returns 0ms delay for desktop (no throttling needed)', () => {
+    expect(getMobileThrottleDelay(false)).toBe(0)
   })
 })

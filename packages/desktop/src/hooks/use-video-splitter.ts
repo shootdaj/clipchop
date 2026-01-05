@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { MP4Clip, Combinator, OffscreenSprite } from '@webav/av-cliper'
-import { toMicroseconds, calculateSegmentBoundaries, getH264LevelCode, getH264ProfileCode, getVideoBitrate } from '@/lib/video-utils'
+import { toMicroseconds, calculateSegmentBoundaries, getH264LevelCode, getH264ProfileCode, getVideoBitrate, getMobileThrottleDelay } from '@/lib/video-utils'
 
 export interface VideoMetadata {
   duration: number // seconds
@@ -176,6 +176,9 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
         let outputWidth = metadata.width
         let outputHeight = metadata.height
 
+        // Detect mobile early - affects encoding parameters (fps, bitrate, throttling)
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+
         if (maxResolution !== null) {
           const maxDimension = Math.max(metadata.width, metadata.height)
           if (maxDimension > maxResolution) {
@@ -185,14 +188,14 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
             console.log(`Downscaling from ${metadata.width}x${metadata.height} to ${outputWidth}x${outputHeight}`)
           }
         }
-        
+
         // Use utility functions for codec configuration
-        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
         const levelCode = getH264LevelCode(outputWidth, outputHeight)
         const codecProfile = getH264ProfileCode(isMobile)
         const bitrate = getVideoBitrate(maxResolution)
+        const mobileThrottle = getMobileThrottleDelay(isMobile)
 
-        console.log(`Device: ${isMobile ? 'mobile' : 'desktop'}, bitrate: ${bitrate}, codec: avc1.${codecProfile}${levelCode}`)
+        console.log(`Device: ${isMobile ? 'mobile' : 'desktop'}, bitrate: ${bitrate}, codec: avc1.${codecProfile}${levelCode}, throttle: ${mobileThrottle}ms`)
 
         const combinator = new Combinator({
           width: outputWidth,
@@ -224,8 +227,11 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
         let totalBytes = 0
 
         console.log('Starting to read output stream...')
-        
-        // Adaptive throttling - only slow down if device is struggling
+
+        // Throttling strategy:
+        // 1. Mobile: constant delay between chunks to prevent encoder queue buildup
+        // 2. Both: additional adaptive delay if encoder is struggling
+        // Based on Chrome WebCodecs best practices for preventing choppy output
         let lastChunkTime = performance.now()
         let slowChunkCount = 0
         const SLOW_THRESHOLD = 100 // If chunk takes >100ms, device is struggling
@@ -245,17 +251,22 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
             chunkCount++
             totalBytes += value.length
 
-            // Adaptive throttling: if chunks are taking too long, the encoder is struggling
-            // Give it a breather to catch up
+            // Apply constant throttling for mobile to prevent encoder overload
+            // This is the key fix for choppy video on mobile
+            if (mobileThrottle > 0) {
+              await new Promise(resolve => setTimeout(resolve, mobileThrottle))
+            }
+
+            // Additional adaptive throttling: if chunks are taking too long, add more delay
             if (chunkTime > SLOW_THRESHOLD) {
               slowChunkCount++
               // Proportional delay based on how slow we are
-              const delay = Math.min(chunkTime * 0.5, 50) // Max 50ms delay
+              const delay = Math.min(chunkTime * 0.5, 50) // Max 50ms additional delay
               await new Promise(resolve => setTimeout(resolve, delay))
             }
 
             if (chunkCount === 1 || chunkCount % 50 === 0) {
-              console.log(`Segment ${i + 1}: ${chunkCount} chunks, ${totalBytes} bytes, avg chunk time: ${chunkTime.toFixed(1)}ms`)
+              console.log(`Segment ${i + 1}: ${chunkCount} chunks, ${totalBytes} bytes, chunk time: ${chunkTime.toFixed(1)}ms`)
               const segmentProgress = (i / calculatedSegments.length) * 100
               const estimatedChunkProgress = Math.min(segmentProgress + 5, ((i + 1) / calculatedSegments.length) * 100)
               setProgress(p => ({
