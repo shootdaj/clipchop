@@ -59,8 +59,6 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
   })
 
   const videoRef = useRef<HTMLVideoElement | null>(null)
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
 
   const reset = useCallback(() => {
     setVideoFile(null)
@@ -147,60 +145,39 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
     video: HTMLVideoElement,
     startTime: number,
     duration: number,
-    outputWidth: number,
-    outputHeight: number
+    _outputWidth: number,
+    _outputHeight: number
   ): Promise<Blob> => {
     return new Promise(async (resolve, reject) => {
       try {
-        // Create canvas for drawing video frames
-        const canvas = document.createElement('canvas')
-        canvas.width = outputWidth
-        canvas.height = outputHeight
-        const ctx = canvas.getContext('2d')!
-
-        canvasRef.current = canvas
-        ctxRef.current = ctx
-
         // Seek to start time
         video.currentTime = startTime
         await new Promise<void>((res) => {
           video.onseeked = () => res()
         })
 
-        // Unmute video for audio capture (will be captured, not played through speakers)
-        video.muted = false
-        video.volume = 0.001 // Nearly silent but not muted (muted = no audio capture)
-
-        // Try to get stream directly from video element (includes audio)
-        let combinedStream: MediaStream
-
-        // Method 1: Try captureStream on video element (best - includes audio)
-        if ('captureStream' in video && typeof (video as any).captureStream === 'function') {
-          try {
-            const videoStream = (video as any).captureStream(30) as MediaStream
-            if (videoStream.getAudioTracks().length > 0) {
-              console.log('Using video.captureStream() with audio')
-
-              // Create canvas stream for scaled video
-              const canvasStream = canvas.captureStream(30)
-
-              // Combine canvas video with original audio
-              combinedStream = new MediaStream([
-                ...canvasStream.getVideoTracks(),
-                ...videoStream.getAudioTracks()
-              ])
-            } else {
-              console.log('video.captureStream() has no audio tracks, using canvas only')
-              combinedStream = canvas.captureStream(30)
-            }
-          } catch (e) {
-            console.log('video.captureStream() failed:', e)
-            combinedStream = canvas.captureStream(30)
+        // Wait for video to be ready to play
+        await new Promise<void>((res) => {
+          if (video.readyState >= 3) {
+            res()
+          } else {
+            video.oncanplay = () => res()
           }
+        })
+
+        // Unmute video for audio capture
+        video.muted = false
+        video.volume = 0.001 // Nearly silent but not muted
+
+        // Use video.captureStream() directly - keeps audio/video in perfect sync
+        // No canvas scaling to avoid sync issues
+        let stream: MediaStream
+
+        if ('captureStream' in video && typeof (video as any).captureStream === 'function') {
+          stream = (video as any).captureStream() as MediaStream
+          console.log(`video.captureStream(): ${stream.getVideoTracks().length} video, ${stream.getAudioTracks().length} audio tracks`)
         } else {
-          // Method 2: Canvas only (no audio)
-          console.log('captureStream not available, using canvas only (no audio)')
-          combinedStream = canvas.captureStream(30)
+          throw new Error('captureStream not supported on this device')
         }
 
         // Determine best codec
@@ -225,12 +202,12 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
           throw new Error('No supported video format for MediaRecorder')
         }
 
-        console.log(`MediaRecorder using: ${selectedMimeType}, audio tracks: ${combinedStream.getAudioTracks().length}`)
+        console.log(`MediaRecorder using: ${selectedMimeType}`)
 
         const chunks: Blob[] = []
-        const recorder = new MediaRecorder(combinedStream, {
+        const recorder = new MediaRecorder(stream, {
           mimeType: selectedMimeType,
-          videoBitsPerSecond: 2000000, // 2 Mbps
+          videoBitsPerSecond: 2500000, // 2.5 Mbps
           audioBitsPerSecond: 128000,  // 128 kbps audio
         })
 
@@ -241,7 +218,7 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
         }
 
         recorder.onstop = () => {
-          video.muted = true // Re-mute after recording
+          video.muted = true
           const blob = new Blob(chunks, { type: selectedMimeType })
           resolve(blob)
         }
@@ -251,48 +228,33 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
           reject(new Error('MediaRecorder error: ' + e))
         }
 
-        // Start recording
-        recorder.start(100) // Collect data every 100ms
+        // Start recording BEFORE playing to ensure we capture from the start
+        recorder.start(100)
 
-        // Animation loop to draw video to canvas
-        let animationId: number
-        const drawFrame = () => {
+        // Small delay to ensure recorder is ready
+        await new Promise(res => setTimeout(res, 50))
+
+        // Start playback
+        video.play()
+
+        // Monitor playback and stop at the right time
+        const checkTime = () => {
           if (video.paused || video.ended || video.currentTime >= startTime + duration) {
-            cancelAnimationFrame(animationId)
             video.pause()
             recorder.stop()
             return
           }
-
-          // Scale video to fit canvas while maintaining aspect ratio
-          const scale = Math.min(
-            outputWidth / video.videoWidth,
-            outputHeight / video.videoHeight
-          )
-          const drawWidth = video.videoWidth * scale
-          const drawHeight = video.videoHeight * scale
-          const offsetX = (outputWidth - drawWidth) / 2
-          const offsetY = (outputHeight - drawHeight) / 2
-
-          ctx.fillStyle = '#000'
-          ctx.fillRect(0, 0, outputWidth, outputHeight)
-          ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight)
-
-          animationId = requestAnimationFrame(drawFrame)
+          requestAnimationFrame(checkTime)
         }
+        checkTime()
 
-        // Start playback and drawing
-        video.play()
-        drawFrame()
-
-        // Stop after duration
+        // Fallback timeout
         setTimeout(() => {
-          if (!video.paused) {
+          if (recorder.state === 'recording') {
             video.pause()
             recorder.stop()
-            cancelAnimationFrame(animationId)
           }
-        }, duration * 1000 + 500) // Add 500ms buffer
+        }, duration * 1000 + 1000)
 
       } catch (error) {
         reject(error)
