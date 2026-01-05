@@ -167,32 +167,46 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
           video.onseeked = () => res()
         })
 
-        // Create stream from canvas
-        const canvasStream = canvas.captureStream(30) // 30fps output
+        // Unmute video for audio capture (will be captured, not played through speakers)
+        video.muted = false
+        video.volume = 0.001 // Nearly silent but not muted (muted = no audio capture)
 
-        // Try to get audio track from video
+        // Try to get stream directly from video element (includes audio)
         let combinedStream: MediaStream
-        try {
-          // Create audio context to capture audio
-          const audioCtx = new AudioContext()
-          const source = audioCtx.createMediaElementSource(video)
-          const destination = audioCtx.createMediaStreamDestination()
-          source.connect(destination)
-          source.connect(audioCtx.destination) // Also output to speakers (muted anyway)
 
-          // Combine video and audio tracks
-          combinedStream = new MediaStream([
-            ...canvasStream.getVideoTracks(),
-            ...destination.stream.getAudioTracks()
-          ])
-        } catch {
-          // If audio capture fails, just use canvas stream
-          console.log('Audio capture not supported, recording video only')
-          combinedStream = canvasStream
+        // Method 1: Try captureStream on video element (best - includes audio)
+        if ('captureStream' in video && typeof (video as any).captureStream === 'function') {
+          try {
+            const videoStream = (video as any).captureStream(30) as MediaStream
+            if (videoStream.getAudioTracks().length > 0) {
+              console.log('Using video.captureStream() with audio')
+
+              // Create canvas stream for scaled video
+              const canvasStream = canvas.captureStream(30)
+
+              // Combine canvas video with original audio
+              combinedStream = new MediaStream([
+                ...canvasStream.getVideoTracks(),
+                ...videoStream.getAudioTracks()
+              ])
+            } else {
+              console.log('video.captureStream() has no audio tracks, using canvas only')
+              combinedStream = canvas.captureStream(30)
+            }
+          } catch (e) {
+            console.log('video.captureStream() failed:', e)
+            combinedStream = canvas.captureStream(30)
+          }
+        } else {
+          // Method 2: Canvas only (no audio)
+          console.log('captureStream not available, using canvas only (no audio)')
+          combinedStream = canvas.captureStream(30)
         }
 
         // Determine best codec
         const mimeTypes = [
+          'video/webm;codecs=vp9,opus',
+          'video/webm;codecs=vp8,opus',
           'video/webm;codecs=vp9',
           'video/webm;codecs=vp8',
           'video/webm',
@@ -211,12 +225,13 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
           throw new Error('No supported video format for MediaRecorder')
         }
 
-        console.log(`MediaRecorder using: ${selectedMimeType}`)
+        console.log(`MediaRecorder using: ${selectedMimeType}, audio tracks: ${combinedStream.getAudioTracks().length}`)
 
         const chunks: Blob[] = []
         const recorder = new MediaRecorder(combinedStream, {
           mimeType: selectedMimeType,
           videoBitsPerSecond: 2000000, // 2 Mbps
+          audioBitsPerSecond: 128000,  // 128 kbps audio
         })
 
         recorder.ondataavailable = (e) => {
@@ -226,11 +241,13 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
         }
 
         recorder.onstop = () => {
+          video.muted = true // Re-mute after recording
           const blob = new Blob(chunks, { type: selectedMimeType })
           resolve(blob)
         }
 
         recorder.onerror = (e) => {
+          video.muted = true
           reject(new Error('MediaRecorder error: ' + e))
         }
 
