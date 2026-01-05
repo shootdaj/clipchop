@@ -25,7 +25,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -98,15 +98,15 @@ jobs:
         run: bunx cap sync ios
         working-directory: packages/desktop
 
-      - name: Install CocoaPods
+      - name: Resolve Swift Packages
         run: |
           cd packages/desktop/ios/App
-          pod install
+          xcodebuild -resolvePackageDependencies -project App.xcodeproj
 
       - name: Build iOS (unsigned simulator build)
         run: |
           cd packages/desktop/ios/App
-          xcodebuild -workspace App.xcworkspace \
+          xcodebuild -project App.xcodeproj \
             -scheme App \
             -configuration Release \
             -sdk iphonesimulator \
@@ -116,7 +116,7 @@ jobs:
       - name: Build iOS Archive (unsigned)
         run: |
           cd packages/desktop/ios/App
-          xcodebuild -workspace App.xcworkspace \
+          xcodebuild -project App.xcodeproj \
             -scheme App \
             -configuration Release \
             -sdk iphoneos \
