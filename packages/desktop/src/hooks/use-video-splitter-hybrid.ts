@@ -1,9 +1,9 @@
 import { useVideoSplitter as useElectronSplitter } from './use-video-splitter-electron'
-import { useVideoSplitter as useWebSplitter } from './use-video-splitter'
+import { useVideoSplitter as useFFmpegWasmSplitter } from './use-video-splitter-ffmpeg-wasm'
 
 export function useVideoSplitter() {
   const isElectron = typeof window !== 'undefined' && window.electron !== undefined
-  
+
   if (isElectron) {
     const electronHook = useElectronSplitter()
     return {
@@ -16,12 +16,14 @@ export function useVideoSplitter() {
       }
     }
   } else {
-    const webHook = useWebSplitter()
+    // Use ffmpeg.wasm for all web - same FFmpeg logic as Electron desktop
+    // WebCodecs/av-cliper had issues with VFR sources causing choppy output
+    const wasmHook = useFFmpegWasmSplitter()
     return {
-      ...webHook,
+      ...wasmHook,
       loadVideo: async (fileOrPath?: File | string) => {
         if (fileOrPath instanceof File) {
-          return webHook.loadVideo(fileOrPath)
+          return wasmHook.loadVideo(fileOrPath)
         }
         throw new Error('File required for web mode')
       }

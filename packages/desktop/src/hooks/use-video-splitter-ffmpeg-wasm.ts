@@ -241,6 +241,7 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
     metadata,
     segments,
     progress,
+    inputSource: videoFile,
     loadVideo,
     calculateSegments,
     splitVideo,

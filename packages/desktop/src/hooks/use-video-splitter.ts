@@ -195,12 +195,11 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
         const bitrate = getVideoBitrate(maxResolution)
         const mobileThrottle = getMobileThrottleDelay(isMobile)
 
-        console.log(`Device: ${isMobile ? 'mobile' : 'desktop'}, bitrate: ${bitrate}, codec: avc1.${codecProfile}${levelCode}, throttle: ${mobileThrottle}ms, fps: 60`)
+        // Mobile: use 30fps to reduce encoder stress (mobile WebCodecs struggles with 60fps)
+        // Desktop: use 60fps to preserve motion from high-fps sources
+        const outputFps = isMobile ? 30 : 60
 
-        // Use 60fps to preserve motion from high-fps sources (mobile videos are often 60fps)
-        // Using 30fps would drop half the frames from 60fps sources, causing choppy playback
-        // For 30fps sources, this just means duplicate frames in output (smooth, slightly larger file)
-        const outputFps = 60
+        console.log(`Device: ${isMobile ? 'mobile' : 'desktop'}, bitrate: ${bitrate}, codec: avc1.${codecProfile}${levelCode}, throttle: ${mobileThrottle}ms, fps: ${outputFps}`)
 
         const combinator = new Combinator({
           width: outputWidth,
