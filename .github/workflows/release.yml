@@ -144,6 +144,8 @@ jobs:
       - name: Deploy to Vercel
         run: |
           cd packages/desktop/dist
+          # Create minimal vercel.json to prevent build step (we already built)
+          echo '{"headers":[{"source":"/(.*)", "headers":[{"key":"Cross-Origin-Opener-Policy","value":"same-origin"},{"key":"Cross-Origin-Embedder-Policy","value":"require-corp"}]}]}' > vercel.json
           vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
