@@ -215,40 +215,10 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
           }
         }
 
-        // Test actual device codec capability using WebCodecs API
-        // Try profiles in order: High (best compression) → Main → Baseline (most compatible)
-        const profiles = [
-          { code: '6400', name: 'High' },
-          { code: '4d00', name: 'Main' },
-          { code: '4200', name: 'Baseline' },
-        ]
-
-        let codecProfile = '4200' // Default to Baseline
-        let profileName = 'Baseline'
-
-        for (const profile of profiles) {
-          const testCodec = `avc1.${profile.code}${levelCode}`
-          try {
-            const support = await VideoEncoder.isConfigSupported({
-              codec: testCodec,
-              width: outputWidth,
-              height: outputHeight,
-              bitrate,
-              framerate: 30,
-            })
-            if (support.supported) {
-              codecProfile = profile.code
-              profileName = profile.name
-              console.log(`Device supports ${profile.name} profile (${testCodec})`)
-              break
-            }
-          } catch {
-            // Profile not supported, try next
-          }
-        }
-
-        console.log(`Using ${profileName} profile for encoding`)
-        console.log(`Combinator config: ${outputWidth}x${outputHeight}, bitrate: ${bitrate}, codec: avc1.${codecProfile}${levelCode}`)
+        // Mobile devices struggle to decode High profile - use Baseline for smooth playback
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+        const codecProfile = isMobile ? '4200' : '6400' // Baseline vs High
+        console.log(`Device: ${isMobile ? 'mobile (Baseline)' : 'desktop (High)'}, codec: avc1.${codecProfile}${levelCode}`)
 
         const combinator = new Combinator({
           width: outputWidth,
