@@ -81,6 +81,7 @@ jobs:
         working-directory: packages/desktop
 
       - name: Inject version from release
+        shell: bash
         run: |
           VERSION="${{ needs.release.outputs.new_release_version }}"
           echo "Injecting version: $VERSION"
@@ -100,3 +101,50 @@ jobs:
           files: packages/desktop/release/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-vercel:
+    needs: release
+    runs-on: ubuntu-latest
+    # Always deploy to Vercel on push to master, even without new release
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+        working-directory: packages/desktop
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ needs.release.outputs.new_release_published }}" == "true" ]; then
+            echo "version=${{ needs.release.outputs.new_release_version }}" >> $GITHUB_OUTPUT
+          else
+            # Use latest git tag
+            VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "1.0.0")
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build for production
+        run: npm run build
+        working-directory: packages/desktop
+        env:
+          APP_VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Deploy to Vercel
+        run: |
+          cd packages/desktop/dist
+          vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
