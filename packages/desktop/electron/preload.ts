@@ -21,10 +21,10 @@ export interface SplitProgress {
 contextBridge.exposeInMainWorld('electron', {
   openFile: () => ipcRenderer.invoke('dialog:openFile'),
   saveFile: (defaultName: string) => ipcRenderer.invoke('dialog:saveFile', defaultName),
-  
-  getVideoMetadata: (filePath: string) => 
+
+  getVideoMetadata: (filePath: string) =>
     ipcRenderer.invoke('video:getMetadata', filePath),
-  
+
   splitVideo: (
     filePath: string,
     segmentDuration: number,
@@ -38,13 +38,16 @@ contextBridge.exposeInMainWorld('electron', {
     namingPattern,
     maxResolution
   }),
-  
+
+  copyToDownloads: (sourcePath: string, filename?: string) =>
+    ipcRenderer.invoke('file:copyToDownloads', { sourcePath, filename }),
+
   onProgress: (callback: (progress: SplitProgress) => void) => {
     const subscription = (_event: any, progress: SplitProgress) => callback(progress)
     ipcRenderer.on('video:progress', subscription)
     return () => ipcRenderer.removeListener('video:progress', subscription)
   },
-  
+
   platform: process.platform,
   version: process.versions.electron,
 })

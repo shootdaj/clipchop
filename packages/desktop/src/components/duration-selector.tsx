@@ -11,18 +11,19 @@ interface DurationSelectorProps {
 
 const DEFAULT_PRESETS = [15, 30, 60, 90]
 
+// Optimized springs - higher damping = less oscillation = smoother
 const fluidSpring = {
   type: 'spring' as const,
-  stiffness: 120,
-  damping: 14,
-  mass: 1,
+  stiffness: 200,
+  damping: 25,
+  mass: 0.8,
 }
 
 const bouncySpring = {
   type: 'spring' as const,
-  stiffness: 400,
-  damping: 25,
-  mass: 0.5,
+  stiffness: 300,
+  damping: 22,
+  mass: 0.6,
 }
 
 const formatDuration = (seconds: number): string => {
@@ -55,10 +56,9 @@ export function DurationSelector({
 
   return (
     <motion.div
-      layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={fluidSpring}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
       className="card-3d p-6 space-y-5"
     >
       <div className="flex items-center justify-between">
@@ -87,9 +87,9 @@ export function DurationSelector({
           return (
             <motion.button
               key={preset}
-              initial={{ opacity: 0, y: 20, scale: 0.8 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ ...bouncySpring, delay: index * 0.05 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...bouncySpring, delay: Math.min(index * 0.03, 0.12) }}
               whileHover={{
                 scale: disabled ? 1 : 1.05,
                 y: disabled ? 0 : -3
@@ -131,9 +131,9 @@ export function DurationSelector({
 
         {/* Custom button */}
         <motion.button
-          initial={{ opacity: 0, y: 20, scale: 0.8 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ ...bouncySpring, delay: allPresets.length * 0.05 }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...bouncySpring, delay: 0.15 }}
           whileHover={{
             scale: disabled ? 1 : 1.05,
             y: disabled ? 0 : -3
@@ -162,11 +162,10 @@ export function DurationSelector({
       <AnimatePresence>
         {showCustomInput && (
           <motion.div
-            initial={{ opacity: 0, height: 0, y: -10 }}
-            animate={{ opacity: 1, height: 'auto', y: 0 }}
-            exit={{ opacity: 0, height: 0, y: -10 }}
-            transition={fluidSpring}
-            className="overflow-hidden"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
           >
             <div className="flex gap-3 pt-2">
               <motion.input

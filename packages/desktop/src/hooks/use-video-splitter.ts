@@ -33,6 +33,7 @@ interface UseVideoSplitterReturn {
   metadata: VideoMetadata | null
   segments: SplitSegment[]
   progress: SplitProgress
+  inputSource: File | null
   loadVideo: (file: File) => Promise<void>
   calculateSegments: (segmentDuration: number, namingPattern: 'sequential' | 'timestamp') => SplitSegment[]
   splitVideo: (segmentDuration: number, namingPattern: 'sequential' | 'timestamp', maxResolution?: number | null) => Promise<Blob[]>
@@ -43,6 +44,7 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
   const [metadata, setMetadata] = useState<VideoMetadata | null>(null)
   const [segments, setSegments] = useState<SplitSegment[]>([])
   const [clip, setClip] = useState<MP4Clip | null>(null)
+  const [inputFile, setInputFile] = useState<File | null>(null)
   const [progress, setProgress] = useState<SplitProgress>({
     currentSegment: 0,
     totalSegments: 0,
@@ -55,6 +57,7 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
       clip.destroy()
     }
     setClip(null)
+    setInputFile(null)
     setMetadata(null)
     setSegments([])
     setProgress({
@@ -68,6 +71,7 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
   const loadVideo = useCallback(async (file: File) => {
     try {
       setProgress(p => ({ ...p, status: 'loading' }))
+      setInputFile(file)
 
       // Create MP4Clip from file stream
       const newClip = new MP4Clip(file.stream())
@@ -287,6 +291,7 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
     metadata,
     segments,
     progress,
+    inputSource: inputFile,
     loadVideo,
     calculateSegments,
     splitVideo,

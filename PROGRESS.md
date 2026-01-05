@@ -1,7 +1,7 @@
 # Clipchop - Implementation Progress
 
 ## Current Status: Multi-Platform Complete (Desktop), Mobile Blocked
-**Last Updated**: 2026-01-04 (Session 5) - Electron + Web PWA + Mobile (WIP)
+**Last Updated**: 2026-01-05 (Session 6) - Video Preview, Animation Fixes, CI/CD Improvements
 
 ---
 
@@ -38,8 +38,10 @@
 - [x] Floating background orbs with morphing animation
 - [x] 3D card system (card-3d, btn-3d, pill-3d)
 - [x] Glow effects and hover states
-- [ ] Progress display with cancel support
-- [ ] Download panel (individual + zip)
+- [x] Progress display with time estimates
+- [x] Video preview with scrubbing (input + output)
+- [x] Download panel (individual downloads)
+- [ ] Download all as zip
 - [ ] Mobile-responsive design
 - [ ] Error handling + user feedback
 
@@ -57,6 +59,65 @@
 ---
 
 ## Completed Items
+
+### 2026-01-05 (Session 6) - Video Preview, Animation Fixes, CI/CD Improvements
+**Updates**: Video preview with scrubbing, animation performance fixes, download functionality
+
+#### Video Preview Feature:
+- **VideoPreview Component** (`src/components/video-preview.tsx`):
+  - Native HTML5 `<video>` player with controls (play, pause, scrub, volume, fullscreen)
+  - Supports both File/Blob (web) and file:// paths (Electron)
+  - Optimized spring animations
+- **VideoPreviewGrid Component** (`src/components/video-preview-grid.tsx`):
+  - Grid display of all output segments
+  - Individual download button per clip
+  - "Download All" button for batch downloads
+  - Responsive layout
+- **Input Preview**: Shows uploaded video with scrubbing above settings
+- **Output Previews**: Replaced "Show Files" with playable video previews + downloads
+
+#### Animation Performance Fixes:
+- **Root Causes Identified**:
+  - Infinite orb animations using Motion.js (runs on main thread)
+  - Animating `height: 'auto'` (not GPU-accelerated, triggers layout thrashing)
+  - Overuse of `layout` prop (unnecessary recalculations)
+  - Low damping springs causing excessive oscillations
+  - Uncapped stagger delays on large lists
+- **Solutions Applied**:
+  - Moved orb animations to CSS (`animate-float-slow`, `animate-float-medium`, `animate-float-fast`)
+  - Removed `height: 'auto'` animations, using opacity/transform only
+  - Removed unnecessary `layout` props from containers
+  - Increased spring damping (14→22-25) for smoother animations
+  - Capped stagger delays: `Math.min(index * 0.03, 0.15)`
+- **Spring Config Changes**:
+  - `fluidSpring`: stiffness 200, damping 25, mass 0.8 (was 120, 14, 1)
+  - `bouncySpring`: stiffness 300, damping 22, mass 0.6 (was 400, 25, 0.5)
+  - `gentleSpring`: stiffness 150, damping 25, mass 0.9 (was 80, 20, 1.2)
+
+#### Download Functionality:
+- **Electron IPC Handler** (`electron/ipc-handlers.ts`):
+  - `copyToDownloads` handler copies files to ~/Downloads
+  - Handles filename conflicts by adding number suffix
+- **Web Downloads**: Creates blob URL and triggers download via `<a>` element
+- **Both Platforms**: Auto-downloads to ~/Downloads without prompts
+
+#### CI/CD Improvements:
+- **Tag-based Versioning**: Uses git tags as source of truth
+- **Version Injection**: `package.json` has `0.0.0-development`, CI injects actual version
+- **FFmpeg Bundling**: Fixed Electron builds to include ffmpeg binaries
+
+#### Files Modified:
+- `src/App.tsx` - Animation fixes, video preview integration
+- `src/index.css` - Added CSS animation classes for orbs
+- `src/components/video-preview.tsx` - Created
+- `src/components/video-preview-grid.tsx` - Created
+- `src/components/duration-selector.tsx` - Animation fixes
+- `src/components/split-preview.tsx` - Animation fixes
+- `src/hooks/use-video-splitter.ts` - Added `inputSource`
+- `src/hooks/use-video-splitter-electron.ts` - Added `inputSource`
+- `src/types/electron.d.ts` - Added `copyToDownloads` type
+- `electron/ipc-handlers.ts` - Added download handler
+- `electron/preload.ts` - Added `copyToDownloads` bridge
 
 ### 2026-01-04 (Session 5 Cont.) - Multi-Platform + Deployment
 **Updates**: Monorepo, React Native mobile (blocked), Web PWA deployed

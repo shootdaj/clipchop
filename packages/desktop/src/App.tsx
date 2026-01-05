@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { VideoUploader } from '@/components/video-uploader'
 import { VideoInfo } from '@/components/video-info'
+import { VideoPreview } from '@/components/video-preview'
+import { VideoPreviewGrid } from '@/components/video-preview-grid'
 import { DurationSelector } from '@/components/duration-selector'
 import { SplitPreview } from '@/components/split-preview'
 import { BrowserCompatibility } from '@/components/browser-compatibility'
@@ -9,26 +11,26 @@ import { InstallPrompt } from '@/components/install-prompt'
 import { useVideoSplitter } from '@/hooks/use-video-splitter-hybrid'
 import { cn } from '@/lib/utils'
 
-// Fluid spring configs - tuned for liquid feel (v2)
+// Optimized springs - higher damping = less oscillation = smoother
 const fluidSpring = {
   type: 'spring' as const,
-  stiffness: 120,
-  damping: 14,
-  mass: 1,
+  stiffness: 200,
+  damping: 25,
+  mass: 0.8,
 }
 
 const bouncySpring = {
   type: 'spring' as const,
   stiffness: 300,
-  damping: 20,
-  mass: 0.8,
+  damping: 22,
+  mass: 0.6,
 }
 
 const gentleSpring = {
   type: 'spring' as const,
-  stiffness: 80,
-  damping: 20,
-  mass: 1.2,
+  stiffness: 150,
+  damping: 25,
+  mass: 0.9,
 }
 
 function App() {
@@ -42,6 +44,7 @@ function App() {
     metadata,
     segments,
     progress,
+    inputSource,
     loadVideo,
     calculateSegments,
     splitVideo,
@@ -112,40 +115,19 @@ function App() {
     <>
       <InstallPrompt />
       <div className="min-h-screen gradient-bg p-4 md:p-8 relative overflow-hidden">
-      {/* Animated floating orbs */}
+      {/* Animated floating orbs - using CSS animations for better performance */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        {/* Large purple orb - top left */}
-        <motion.div
-          animate={{
-            x: [0, 50, 20, 0],
-            y: [0, 30, -20, 0],
-            scale: [1, 1.1, 0.95, 1],
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
-          className="orb orb-purple w-[600px] h-[600px] -top-40 -left-40 animate-morph"
-        />
+        {/* Large purple orb - top left - CSS animation only */}
+        <div className="orb orb-purple w-[600px] h-[600px] -top-40 -left-40 animate-float-slow" />
 
-        {/* Amber orb - bottom right */}
-        <motion.div
-          animate={{
-            x: [0, -40, 30, 0],
-            y: [0, -30, 40, 0],
-            scale: [1, 0.9, 1.05, 1],
-          }}
-          transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut', delay: 3 }}
-          className="orb orb-amber w-[500px] h-[500px] -bottom-32 -right-32 animate-morph"
+        {/* Amber orb - bottom right - CSS animation only */}
+        <div
+          className="orb orb-amber w-[500px] h-[500px] -bottom-32 -right-32 animate-float-medium"
           style={{ animationDelay: '-5s' }}
         />
 
-        {/* Small purple orb - center right */}
-        <motion.div
-          animate={{
-            x: [0, -60, 20, 0],
-            y: [0, 40, -30, 0],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-          className="orb orb-purple w-[300px] h-[300px] top-1/3 -right-20 opacity-30"
-        />
+        {/* Small purple orb - center right - CSS animation only */}
+        <div className="orb orb-purple w-[300px] h-[300px] top-1/3 -right-20 opacity-30 animate-float-fast" />
       </div>
 
       <div className="max-w-2xl mx-auto relative z-10">
@@ -219,6 +201,20 @@ function App() {
                 {/* Video info */}
                 <VideoInfo metadata={metadata} onRemove={handleReset} />
 
+                {/* Input video preview */}
+                {inputSource && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={fluidSpring}
+                  >
+                    <VideoPreview
+                      src={inputSource}
+                      title="Input Video"
+                    />
+                  </motion.div>
+                )}
+
                 {/* Duration selector */}
                 <DurationSelector
                   value={selectedDuration}
@@ -279,8 +275,9 @@ function App() {
                   </div>
                   {metadata && (
                     <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.2 }}
                       className="text-xs text-muted-foreground mt-3 space-y-1"
                     >
                       {maxResolution && (
@@ -302,10 +299,10 @@ function App() {
                 <AnimatePresence>
                   {segments.length > 0 && (
                     <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={fluidSpring}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
                     >
                       <SplitPreview
                         segments={segments}
@@ -355,8 +352,8 @@ function App() {
                 </AnimatePresence>
 
                 {/* Actions */}
-                <motion.div layout className="flex gap-4">
-                  {!isComplete ? (
+                {!isComplete ? (
+                  <div className="flex gap-4">
                     <motion.button
                       whileHover={{ scale: canSplit ? 1.02 : 1, y: canSplit ? -2 : 0 }}
                       whileTap={{ scale: canSplit ? 0.98 : 1, y: canSplit ? 2 : 0 }}
@@ -383,75 +380,74 @@ function App() {
                         'Split Video'
                       )}
                     </motion.button>
-                  ) : (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={bouncySpring}
-                      className="flex-1 space-y-5"
-                    >
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ ...bouncySpring, delay: 0.1 }}
-                        className="flex items-center justify-center gap-3 text-center"
-                      >
-                        <motion.span
-                          className="text-3xl"
-                          animate={{
-                            rotate: [0, -10, 10, -10, 0],
-                            scale: [1, 1.2, 1.2, 1.2, 1]
-                          }}
-                          transition={{ duration: 0.6, delay: 0.3 }}
-                        >
-                          ✨
-                        </motion.span>
-                        <p className="text-xl font-bold gradient-text">
-                          {segments.length} clips ready!
-                        </p>
-                      </motion.div>
-                      <div className="flex gap-4">
-                        <motion.button
-                          whileHover={{ scale: 1.02, y: -2 }}
-                          whileTap={{ scale: 0.98, y: 2 }}
-                          onClick={() => {
-                            if (window.electron) {
-                              const seg = segments[0] as any
-                              if (seg && seg.outputPath) {
-                                const outputPath = seg.outputPath
-                                const outputDir = outputPath.substring(0, outputPath.lastIndexOf('/'))
-                                console.log('Files saved to:', outputDir)
-                                alert(`Files saved to:\n${outputDir}`)
-                              }
-                            } else {
-                              segments.forEach((seg: any) => {
-                                if (seg.blob) {
-                                  const url = URL.createObjectURL(seg.blob)
-                                  const a = document.createElement('a')
-                                  a.href = url
-                                  a.download = seg.filename
-                                  a.click()
-                                  URL.revokeObjectURL(url)
-                                }
-                              })
+                  </div>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={fluidSpring}
+                    className="space-y-5"
+                  >
+                    {/* Video preview grid with download buttons */}
+                    <VideoPreviewGrid
+                      segments={segments}
+                      onDownload={(segment) => {
+                        if (window.electron) {
+                          const seg = segment as any
+                          if (seg.outputPath) {
+                            window.electron.copyToDownloads(seg.outputPath, seg.filename)
+                              .then(() => console.log('Downloaded:', seg.filename))
+                              .catch((err: Error) => console.error('Download failed:', err))
+                          }
+                        } else {
+                          const seg = segment as any
+                          if (seg.blob) {
+                            const url = URL.createObjectURL(seg.blob)
+                            const a = document.createElement('a')
+                            a.href = url
+                            a.download = seg.filename
+                            a.click()
+                            URL.revokeObjectURL(url)
+                          }
+                        }
+                      }}
+                      onDownloadAll={() => {
+                        if (window.electron) {
+                          segments.forEach((seg: any) => {
+                            if (seg.outputPath) {
+                              window.electron.copyToDownloads(seg.outputPath, seg.filename)
+                                .then(() => console.log('Downloaded:', seg.filename))
+                                .catch((err: Error) => console.error('Download failed:', err))
                             }
-                          }}
-                          className="flex-1 py-4 px-6 rounded-2xl font-semibold btn-3d text-white glow-purple"
-                        >
-                          {window.electron ? 'Show Files' : 'Download All'}
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.02, y: -2 }}
-                          whileTap={{ scale: 0.98, y: 2 }}
-                          onClick={handleReset}
-                          className="py-4 px-6 rounded-2xl font-semibold btn-3d-secondary text-foreground"
-                        >
-                          New Video
-                        </motion.button>
-                      </div>
-                    </motion.div>
-                  )}
-                </motion.div>
+                          })
+                        } else {
+                          segments.forEach((seg: any) => {
+                            if (seg.blob) {
+                              const url = URL.createObjectURL(seg.blob)
+                              const a = document.createElement('a')
+                              a.href = url
+                              a.download = seg.filename
+                              a.click()
+                              URL.revokeObjectURL(url)
+                            }
+                          })
+                        }
+                      }}
+                    />
+
+                    {/* New Video button */}
+                    <div className="flex justify-center">
+                      <motion.button
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        whileTap={{ scale: 0.98, y: 2 }}
+                        onClick={handleReset}
+                        className="py-3 px-8 rounded-2xl font-semibold btn-3d-secondary text-foreground"
+                      >
+                        Start Over with New Video
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

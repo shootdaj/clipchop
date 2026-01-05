@@ -8,7 +8,7 @@ If you are starting a new session, **STOP** and read this entire file BEFORE doi
 
 Video splitter app that cuts videos into smaller durations for social media (Instagram, TikTok, etc.)
 
-**Last Updated**: 2026-01-04 (Session 5) - Electron + Web + Mobile
+**Last Updated**: 2026-01-05 (Session 6) - Video Preview, Animation Fixes
 
 ---
 
@@ -24,7 +24,7 @@ Video splitter app that cuts videos into smaller durations for social media (Ins
 
 ---
 
-## Current Status (Session 5 - Jan 4, 2026)
+## Current Status (Session 6 - Jan 5, 2026)
 
 ### ✅ What's Working
 
@@ -35,15 +35,25 @@ Video splitter app that cuts videos into smaller durations for social media (Ins
 - ✅ Video rotation fixed (uses FFmpeg autorotate)
 - ✅ All quality options working (Full/HD/SD)
 - ✅ Time estimates with progress updates
+- ✅ Video preview with scrubbing (input + output)
+- ✅ Download to ~/Downloads functionality
 - ✅ Local development: `bun run dev:desktop` from root
 
 **Web App (Vercel)**:
 - ✅ Deployed to https://desktop-seven-lake.vercel.app
 - ✅ PWA support with manifest and service worker
 - ✅ Works on Chrome 102+ desktop browsers
+- ✅ Video preview with scrubbing (input + output)
+- ✅ Download functionality (blob URLs)
 - ⚠️ VERY SLOW (30-60 min for 4K videos) - WebCodecs limitation
 - ⚠️ Limited Android support (Chrome < 102 won't work)
 - ✅ Shows install prompt for PWA on mobile
+
+**Animation Performance** (Session 6 Fixes):
+- ✅ Moved orb animations to CSS (compositor thread)
+- ✅ Optimized spring configs (higher damping, less jank)
+- ✅ Removed layout-thrashing patterns
+- ✅ Capped stagger delays for large lists
 
 ### ⚠️ Known Issues
 
@@ -85,6 +95,11 @@ clipchop/
 │   │       │   ├── use-video-splitter-ffmpeg-wasm.ts # FFmpeg.wasm (universal)
 │   │       │   └── use-video-splitter-hybrid.ts    # Auto-detection
 │   │       └── components/
+│   │           ├── video-preview.tsx       # HTML5 video player with scrubbing
+│   │           ├── video-preview-grid.tsx  # Output clips grid with downloads
+│   │           ├── duration-selector.tsx   # Split duration picker
+│   │           ├── split-preview.tsx       # Timeline visualization
+│   │           └── video-uploader.tsx      # File picker with drag-drop
 │   └── mobile/          # React Native (Android/iOS) - BLOCKED
 │       ├── android/
 │       ├── ios/
@@ -173,6 +188,35 @@ await RNFFmpeg.execute(command)
 ```
 - All packages deprecated
 - Can't build until resolved
+
+### Animation Performance Patterns (Session 6)
+
+**GPU-Accelerated Properties** (fast, use these):
+- `transform` (translate, scale, rotate)
+- `opacity`
+
+**Layout-Triggering Properties** (slow, avoid animating):
+- `height`, `width` (especially `auto`)
+- `padding`, `margin`
+- Any property that causes reflow
+
+**Spring Configuration Guidelines**:
+```typescript
+// Optimized defaults - higher damping = less oscillation = smoother
+const fluidSpring = { stiffness: 200, damping: 25, mass: 0.8 }
+const bouncySpring = { stiffness: 300, damping: 22, mass: 0.6 }
+```
+
+**CSS vs JavaScript Animations**:
+- Use CSS for infinite/background animations (runs on compositor thread)
+- Use Motion.js only for user-triggered interactions
+- Always add `will-change: transform` for CSS animations
+
+**Stagger Delay Capping**:
+```typescript
+// Prevent long total animation times on large lists
+transition={{ ...spring, delay: Math.min(index * 0.03, 0.15) }}
+```
 
 ### Critical Bug Fixes (Session 5)
 
@@ -274,6 +318,8 @@ When making changes, update these:
 2. **`PROGRESS.md`** - Session history, what was completed
 3. **`packages/desktop/src/hooks/use-video-splitter-hybrid.ts`** - Auto-detects Electron vs Web
 4. **`packages/desktop/electron/ffmpeg.ts`** - Video encoding logic
+5. **`packages/desktop/src/App.tsx`** - Main UI, spring configs, preview integration
+6. **`packages/desktop/src/index.css`** - CSS animations (orbs, progress, etc.)
 
 ---
 
@@ -334,11 +380,19 @@ When making changes, update these:
 2. Icons must be proper-sized PNGs (not placeholders)
 3. Manifest requires absolute paths for icons on Vercel
 
+### If Adding/Modifying Animations:
+1. Never animate `height: 'auto'` - use opacity/transform instead
+2. Never use Motion.js for infinite animations - use CSS
+3. Always cap stagger delays with `Math.min(index * delay, maxDelay)`
+4. Remove unnecessary `layout` props - they cause excessive recalculations
+5. Use higher damping values (22-25) for smoother springs
+
 ### Common Issues to Watch For:
 - **Module format conflicts**: Desktop needs CommonJS for Electron, ESM for Vite
 - **Workspace dependencies**: npm doesn't understand Bun's `workspace:*` syntax
 - **Video rotation**: Always use FFmpeg autorotate, never manual transpose
 - **Cache problems**: Service worker can serve stale HTML/assets
+- **Animation jank**: Check for `height: 'auto'` animations or Motion.js infinite loops
 
 ---
 
@@ -449,6 +503,9 @@ git push origin v1.0.0
 - ✅ PWA installable on mobile
 - ✅ Video rotation handling correct
 - ✅ Multi-platform with code reuse
+- ✅ Video preview with scrubbing (input + output)
+- ✅ Download functionality (~/Downloads on Electron, blob on web)
+- ✅ Smooth animations (CSS for infinite, optimized springs)
 - ⚠️ Android native blocked (package issues)
 
 ---

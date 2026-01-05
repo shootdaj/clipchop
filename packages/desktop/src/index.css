@@ -423,6 +423,17 @@
 
 .animate-float-slow {
   animation: float-slow 20s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-float-medium {
+  animation: float-slow 25s ease-in-out infinite reverse;
+  will-change: transform;
+}
+
+.animate-float-fast {
+  animation: float-slow 15s ease-in-out infinite;
+  will-change: transform;
 }
 
 .animate-morph {

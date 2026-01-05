@@ -7,18 +7,19 @@ interface SplitPreviewProps {
   totalDuration: number
 }
 
+// Optimized springs - higher damping = less oscillation = smoother
 const fluidSpring = {
   type: 'spring' as const,
-  stiffness: 120,
-  damping: 14,
-  mass: 1,
+  stiffness: 200,
+  damping: 25,
+  mass: 0.8,
 }
 
 const bouncySpring = {
   type: 'spring' as const,
-  stiffness: 400,
-  damping: 25,
-  mass: 0.5,
+  stiffness: 300,
+  damping: 22,
+  mass: 0.6,
 }
 
 const formatTime = (seconds: number): string => {
@@ -32,10 +33,9 @@ export function SplitPreview({ segments, totalDuration }: SplitPreviewProps) {
 
   return (
     <motion.div
-      layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={fluidSpring}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
       className="card-3d p-6 space-y-5"
     >
       {/* Header */}
@@ -73,7 +73,7 @@ export function SplitPreview({ segments, totalDuration }: SplitPreviewProps) {
                 key={segment.index}
                 initial={{ scaleX: 0, opacity: 0 }}
                 animate={{ scaleX: 1, opacity: 1 }}
-                transition={{ ...fluidSpring, delay: index * 0.05 }}
+                transition={{ ...fluidSpring, delay: Math.min(index * 0.03, 0.15) }}
                 style={{ width: `${widthPercent}%`, originX: 0 }}
                 className={cn(
                   'segment-bar',
@@ -101,29 +101,25 @@ export function SplitPreview({ segments, totalDuration }: SplitPreviewProps) {
       </div>
 
       {/* Segment list with 3D items */}
-      <motion.ul layout className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
+      <ul className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
         {segments.map((segment, index) => (
           <motion.li
             key={segment.index}
-            initial={{ opacity: 0, x: -20, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            transition={{ ...fluidSpring, delay: index * 0.03 }}
-            whileHover={{ scale: 1.02, x: 4 }}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.15, delay: Math.min(index * 0.02, 0.2) }}
             className={cn(
               'flex items-center justify-between',
               'px-4 py-3 rounded-xl text-sm',
               'bg-gradient-to-r from-secondary/30 to-transparent',
               'border border-border/50',
-              'cursor-pointer transition-colors hover:border-primary/30'
+              'transition-colors hover:border-primary/30'
             )}
           >
             <div className="flex items-center gap-3">
-              <motion.span
-                whileHover={{ scale: 1.2, rotate: 10 }}
-                className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/30 to-accent/20 text-primary flex items-center justify-center text-sm font-bold shadow-[0_2px_8px_rgba(168,85,247,0.3)]"
-              >
+              <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/30 to-accent/20 text-primary flex items-center justify-center text-sm font-bold shadow-[0_2px_8px_rgba(168,85,247,0.3)]">
                 {index + 1}
-              </motion.span>
+              </span>
               <span className="text-foreground font-medium">
                 <span className="text-muted-foreground">{formatTime(segment.startTime)}</span>
                 <span className="text-primary mx-2">→</span>
@@ -135,7 +131,7 @@ export function SplitPreview({ segments, totalDuration }: SplitPreviewProps) {
             </span>
           </motion.li>
         ))}
-      </motion.ul>
+      </ul>
     </motion.div>
   )
 }

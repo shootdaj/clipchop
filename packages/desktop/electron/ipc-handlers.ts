@@ -1,10 +1,35 @@
-import { ipcMain, BrowserWindow } from 'electron'
+import { ipcMain, BrowserWindow, app } from 'electron'
 import { getVideoMetadata, splitVideo } from './ffmpeg'
 import path from 'path'
 import fs from 'fs'
 import os from 'os'
 
 export function setupFFmpegHandlers() {
+  // Handler to copy files to Downloads folder
+  ipcMain.handle('file:copyToDownloads', async (_event, { sourcePath, filename }) => {
+    try {
+      const downloadsPath = app.getPath('downloads')
+      const sourceFilename = filename || path.basename(sourcePath)
+      const destPath = path.join(downloadsPath, sourceFilename)
+
+      // Handle filename conflicts by adding number suffix
+      let finalPath = destPath
+      let counter = 1
+      while (fs.existsSync(finalPath)) {
+        const ext = path.extname(sourceFilename)
+        const base = path.basename(sourceFilename, ext)
+        finalPath = path.join(downloadsPath, `${base} (${counter})${ext}`)
+        counter++
+      }
+
+      fs.copyFileSync(sourcePath, finalPath)
+      console.log('Copied to downloads:', finalPath)
+      return { success: true, path: finalPath }
+    } catch (error) {
+      console.error('Failed to copy to downloads:', error)
+      throw new Error(`Failed to copy file: ${error}`)
+    }
+  })
   ipcMain.handle('video:getMetadata', async (_event, filePath: string) => {
     try {
       console.log('Getting metadata for:', filePath)

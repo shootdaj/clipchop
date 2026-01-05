@@ -29,6 +29,7 @@ declare global {
         namingPattern: string,
         maxResolution?: number | null
       ) => Promise<string[]>
+      copyToDownloads: (sourcePath: string, filename?: string) => Promise<{ success: boolean; path: string }>
       onProgress: (callback: (progress: SplitProgress) => void) => () => void
       platform: string
       version: string
