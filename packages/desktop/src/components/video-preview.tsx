@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'motion/react'
-import { Download, Play, Pause } from 'lucide-react'
+import { Download } from 'lucide-react'
 
 interface VideoPreviewProps {
   src: string | Blob | File
@@ -27,14 +27,13 @@ export function VideoPreview({
 }: VideoPreviewProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [videoUrl, setVideoUrl] = useState<string>('')
-  const [isPlaying, setIsPlaying] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isVertical, setIsVertical] = useState(false)
 
   useEffect(() => {
     let url = ''
 
-    if (src instanceof Blob || src instanceof File) {
+    if ((typeof Blob !== 'undefined' && src instanceof Blob) || (typeof File !== 'undefined' && src instanceof File)) {
       url = URL.createObjectURL(src)
       setVideoUrl(url)
     } else if (typeof src === 'string') {
@@ -54,18 +53,6 @@ export function VideoPreview({
     }
   }, [src])
 
-  const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause()
-      } else {
-        videoRef.current.play()
-      }
-    }
-  }
-
-  const handlePlay = () => setIsPlaying(true)
-  const handlePause = () => setIsPlaying(false)
   const handleError = () => setError('Failed to load video')
   const handleLoadedMetadata = () => {
     if (videoRef.current) {
@@ -102,8 +89,6 @@ export function VideoPreview({
             controls
             playsInline
             preload="metadata"
-            onPlay={handlePlay}
-            onPause={handlePause}
             onError={handleError}
             onLoadedMetadata={handleLoadedMetadata}
             className={`${isVertical

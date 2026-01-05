@@ -412,10 +412,11 @@ function App() {
                         }
                       }}
                       onDownloadAll={() => {
-                        if (window.electron) {
+                        const electron = window.electron
+                        if (electron) {
                           segments.forEach((seg: any) => {
                             if (seg.outputPath) {
-                              window.electron.copyToDownloads(seg.outputPath, seg.filename)
+                              electron.copyToDownloads(seg.outputPath, seg.filename)
                                 .then(() => console.log('Downloaded:', seg.filename))
                                 .catch((err: Error) => console.error('Download failed:', err))
                             }
