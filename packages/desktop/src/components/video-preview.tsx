@@ -29,6 +29,7 @@ export function VideoPreview({
   const [videoUrl, setVideoUrl] = useState<string>('')
   const [isPlaying, setIsPlaying] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isVertical, setIsVertical] = useState(false)
 
   useEffect(() => {
     let url = ''
@@ -66,6 +67,12 @@ export function VideoPreview({
   const handlePlay = () => setIsPlaying(true)
   const handlePause = () => setIsPlaying(false)
   const handleError = () => setError('Failed to load video')
+  const handleLoadedMetadata = () => {
+    if (videoRef.current) {
+      const { videoWidth, videoHeight } = videoRef.current
+      setIsVertical(videoHeight > videoWidth)
+    }
+  }
 
   if (!videoUrl) {
     return (
@@ -82,10 +89,10 @@ export function VideoPreview({
       transition={fluidSpring}
       className={`card-3d overflow-hidden ${compact ? '' : ''}`}
     >
-      {/* Video container */}
-      <div className="relative group">
+      {/* Video container - adapts to vertical/horizontal videos */}
+      <div className={`relative group ${isVertical ? 'flex justify-center' : ''}`}>
         {error ? (
-          <div className={`${compact ? 'h-32' : 'h-48'} bg-muted/50 flex items-center justify-center`}>
+          <div className={`${compact ? 'h-32' : 'h-48'} w-full bg-muted/50 flex items-center justify-center`}>
             <span className="text-destructive text-sm">{error}</span>
           </div>
         ) : (
@@ -98,7 +105,10 @@ export function VideoPreview({
             onPlay={handlePlay}
             onPause={handlePause}
             onError={handleError}
-            className={`w-full ${compact ? 'h-32' : 'h-48'} object-contain bg-black/50`}
+            onLoadedMetadata={handleLoadedMetadata}
+            className={`${isVertical
+              ? (compact ? 'h-40 w-auto max-w-full' : 'h-64 w-auto max-w-full')
+              : (compact ? 'w-full h-32' : 'w-full h-48')} object-contain bg-black/50 rounded-t-xl`}
           />
         )}
 
