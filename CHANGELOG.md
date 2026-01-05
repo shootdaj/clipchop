@@ -1,3 +1,10 @@
+## [1.2.3](https://github.com/shootdaj/clipchop/compare/v1.2.2...v1.2.3) (2026-01-05)
+
+
+### Bug Fixes
+
+* bundle node_modules and add app icon ([58e93d6](https://github.com/shootdaj/clipchop/commit/58e93d6ffed58571ba71e89313e76567fd491bd7))
+
 ## [1.2.2](https://github.com/shootdaj/clipchop/compare/v1.2.1...v1.2.2) (2026-01-04)
 
 
