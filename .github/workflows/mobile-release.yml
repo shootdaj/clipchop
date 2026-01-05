@@ -1,113 +1,146 @@
-name: Build Mobile Apps (Android & iOS)
+name: Mobile Release (Capacitor)
 
 on:
   push:
-    tags:
-      - 'mobile-v*'
+    branches:
+      - master
+    paths:
+      - 'packages/desktop/**'
+      - '.github/workflows/mobile-release.yml'
   workflow_dispatch:
 
 jobs:
   build-android:
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
-      - name: Setup Node
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '17'
-      
-      - name: Prepare mobile build
-        run: |
-          cp -r packages/mobile /tmp/clipchop-mobile-build
-          cd /tmp/clipchop-mobile-build
-          rm -f package-lock.json
-      
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
       - name: Install dependencies
-        working-directory: /tmp/clipchop-mobile-build
-        run: npm install --legacy-peer-deps
-      
-      - name: Build Android APK
-        working-directory: /tmp/clipchop-mobile-build/android
-        run: ./gradlew assembleRelease
-      
-      - name: Upload Android APK
+        run: bun install
+        working-directory: packages/desktop
+
+      - name: Build web assets
+        run: bun run build
+        working-directory: packages/desktop
+
+      - name: Sync Capacitor
+        run: bunx cap sync android
+        working-directory: packages/desktop
+
+      - name: Build Android APK (debug for now)
+        run: |
+          cd packages/desktop/android
+          chmod +x ./gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-apk
-          path: /tmp/clipchop-mobile-build/android/app/build/outputs/apk/release/*.apk
-      
-      - name: Release Android
+          name: clipchop-android-debug
+          path: packages/desktop/android/app/build/outputs/apk/debug/*.apk
+
+      - name: Upload to Release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: /tmp/clipchop-mobile-build/android/app/build/outputs/apk/release/*.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
-  build-ios:
-    runs-on: macos-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      
-      - name: Prepare mobile build
-        run: |
-          cp -r packages/mobile /tmp/clipchop-mobile-build
-          cd /tmp/clipchop-mobile-build
-          rm -f package-lock.json
-      
-      - name: Install dependencies
-        working-directory: /tmp/clipchop-mobile-build
-        run: npm install --legacy-peer-deps
-      
-      - name: Install Pods
-        working-directory: /tmp/clipchop-mobile-build/ios
-        run: pod install
-      
-      - name: Build iOS
-        working-directory: /tmp/clipchop-mobile-build/ios
-        run: |
-          xcodebuild -workspace ClipchopAndroid.xcworkspace \
-            -scheme ClipchopAndroid \
-            -configuration Release \
-            -destination 'generic/platform=iOS' \
-            -archivePath ClipchopAndroid.xcarchive \
-            archive
-      
-      - name: Export IPA
-        working-directory: /tmp/clipchop-mobile-build/ios
-        run: |
-          xcodebuild -exportArchive \
-            -archivePath ClipchopAndroid.xcarchive \
-            -exportPath . \
-            -exportOptionsPlist ../exportOptions.plist
-      
-      - name: Upload iOS IPA
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-ipa
-          path: /tmp/clipchop-mobile-build/ios/*.ipa
-      
-      - name: Release iOS
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: /tmp/clipchop-mobile-build/ios/*.ipa
+          tag_name: mobile-v${{ github.run_number }}
+          name: Mobile Release v${{ github.run_number }}
+          files: packages/desktop/android/app/build/outputs/apk/debug/*.apk
+          draft: false
+          prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+        working-directory: packages/desktop
+
+      - name: Build web assets
+        run: bun run build
+        working-directory: packages/desktop
+
+      - name: Sync Capacitor
+        run: bunx cap sync ios
+        working-directory: packages/desktop
+
+      - name: Install CocoaPods
+        run: |
+          cd packages/desktop/ios/App
+          pod install
+
+      - name: Build iOS (unsigned simulator build)
+        run: |
+          cd packages/desktop/ios/App
+          xcodebuild -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            build
+
+      - name: Build iOS Archive (unsigned)
+        run: |
+          cd packages/desktop/ios/App
+          xcodebuild -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath build/App.xcarchive \
+            archive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+        continue-on-error: true
+
+      - name: Create unsigned IPA
+        run: |
+          cd packages/desktop/ios/App
+          if [ -d "build/App.xcarchive" ]; then
+            mkdir -p build/Payload
+            cp -r build/App.xcarchive/Products/Applications/App.app build/Payload/
+            cd build
+            zip -r ClipChop-unsigned.ipa Payload
+          fi
+        continue-on-error: true
+
+      - name: Upload iOS build
+        uses: actions/upload-artifact@v4
+        with:
+          name: clipchop-ios-unsigned
+          path: packages/desktop/ios/App/build/*.ipa
+        continue-on-error: true

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ClipChop</string>
+    <string name="title_activity_main">ClipChop</string>
+    <string name="package_name">com.clipchop.app</string>
+    <string name="custom_url_scheme">com.clipchop.app</string>
+</resources>
