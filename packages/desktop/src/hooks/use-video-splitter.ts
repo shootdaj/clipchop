@@ -197,16 +197,11 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
 
         console.log(`Device: ${isMobile ? 'mobile' : 'desktop'}, bitrate: ${bitrate}, codec: avc1.${codecProfile}${levelCode}, throttle: ${mobileThrottle}ms`)
 
-        // Force constant frame rate (30fps) to fix VFR (Variable Frame Rate) videos from phones
-        // Source videos often have irregular frame timing that causes choppy playback
-        const targetFps = 30
-
         const combinator = new Combinator({
           width: outputWidth,
           height: outputHeight,
           videoCodec: `avc1.${codecProfile}${levelCode}`,
           bitrate,
-          fps: targetFps,
         })
 
         const sprite = new OffscreenSprite(segmentClip)
