@@ -34,6 +34,7 @@ interface UseVideoSplitterReturn {
   metadata: VideoMetadata | null
   segments: SplitSegment[]
   progress: SplitProgress
+  inputSource: File | null
   loadVideo: (file: File) => Promise<void>
   calculateSegments: (segmentDuration: number, namingPattern: 'sequential' | 'timestamp') => SplitSegment[]
   splitVideo: (segmentDuration: number, namingPattern: 'sequential' | 'timestamp', maxResolution?: number | null) => Promise<Blob[]>
