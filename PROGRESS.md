@@ -1,7 +1,7 @@
 # Clipchop - Implementation Progress
 
 ## Current Status: Multi-Platform Complete (Desktop), Mobile Blocked
-**Last Updated**: 2026-01-05 (Session 7) - Audio Sync Fix, E2E Tests, Unit Tests
+**Last Updated**: 2026-01-05 (Session 8) - Unified CI/CD, Version Display Fix
 
 ---
 
@@ -64,6 +64,50 @@
 ---
 
 ## Completed Items
+
+### 2026-01-05 (Session 8) - Unified CI/CD, Version Display Fix
+**Updates**: Moved Vercel deployment to GitHub Actions, fixed version display
+
+#### Version Display Issue:
+- **Problem**: Web app showed `v0.0.0-development` instead of actual version
+- **Root Cause**: Vercel's shallow clone doesn't include git tags, so `git describe --tags` failed
+- **Solution**: Deploy via GitHub Actions which has full git history and injects `APP_VERSION` env var
+
+#### CI/CD Unification:
+- **Before**: Vercel had its own GitHub integration (separate from GitHub Actions)
+- **After**: Single GitHub Actions workflow handles everything:
+  - Semantic versioning (semantic-release)
+  - Electron builds for macOS/Windows/Linux
+  - Vercel deployment with pre-built assets
+- **Benefits**:
+  - Version always correct (from git tags)
+  - Single source of truth for all deployments
+  - No race conditions between Vercel and GitHub Actions
+
+#### Windows Build Fix:
+- **Problem**: PowerShell syntax error (`VERSION="1.4.2": The term 'VERSION=1.4.2' is not recognized`)
+- **Solution**: Added `shell: bash` to version injection step in release.yml
+
+#### Vercel Pre-built Deployment:
+- Uses Vercel Output API format (`.vercel/output/static/`)
+- Deploys with `--prebuilt` flag to skip remote build
+- COOP/COEP headers configured in `config.json`
+
+#### Required GitHub Secrets:
+- `VERCEL_TOKEN` - Full Account scope API token
+- `VERCEL_ORG_ID` - `team_yiKtg8AQq9Z9ezBem9SYYvsF`
+- `VERCEL_PROJECT_ID` - `prj_g5WRS4bKA5uwWulTB1lfsMrw7AbW`
+
+#### Files Modified:
+- `.github/workflows/release.yml` - Added deploy-vercel job, fixed Windows shell
+- `CLAUDE.md` - Updated deployment docs
+- `PROGRESS.md` - Added session 8 entry
+
+#### Important:
+- **Vercel GitHub integration DISABLED** - all deploys via GitHub Actions
+- Never run `vercel` commands manually
+
+---
 
 ### 2026-01-05 (Session 7) - Audio Sync Fix, E2E Tests, Unit Tests
 **Updates**: Fixed audio/video sync issue, comprehensive test suite

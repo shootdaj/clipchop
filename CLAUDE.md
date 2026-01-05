@@ -8,7 +8,7 @@ If you are starting a new session, **STOP** and read this entire file BEFORE doi
 
 Video splitter app that cuts videos into smaller durations for social media (Instagram, TikTok, etc.)
 
-**Last Updated**: 2026-01-05 (Session 7) - Audio Sync Fix, E2E Tests, Unit Tests
+**Last Updated**: 2026-01-05 (Session 8) - Unified CI/CD, Version Display Fix
 
 ---
 
@@ -34,7 +34,7 @@ To deploy: Just `git push origin master` - that's it!
 
 ---
 
-## Current Status (Session 7 - Jan 5, 2026)
+## Current Status (Session 8 - Jan 5, 2026)
 
 ### ✅ What's Working
 
@@ -324,12 +324,13 @@ bun run test:all       # Unit + E2E
 
 ### CI/CD Workflows
 
-**GitHub Actions**:
-- `.github/workflows/release.yml` - Triggered on push to master, handles:
+**GitHub Actions** (`.github/workflows/release.yml`):
+- Triggered on push to master, handles ALL deployments:
   - Semantic versioning (auto-bumps version based on commit messages)
   - Creates GitHub Release
   - Builds Electron apps for macOS/Windows/Linux
   - Uploads binaries to the release
+  - **Deploys to Vercel** (pre-built, with correct version)
 - `.github/workflows/mobile-release.yml` - Triggered by `mobile-v*` tags (failing)
 - `.github/workflows/github-pages.yml` - Triggered by push to master
 
@@ -339,8 +340,15 @@ bun run test:all       # Unit + E2E
 - `chore: description` → No version bump
 
 **Vercel Deployment**:
-- Git integration enabled - auto-deploys on push to master
+- ⚠️ Git integration DISABLED - deploys via GitHub Actions only
+- Uses pre-built output with `--prebuilt` flag
+- Version injected from git tags during CI build
 - Web URL: https://desktop-seven-lake.vercel.app
+
+**Required GitHub Secrets**:
+- `VERCEL_TOKEN` - Vercel API token (Full Account scope)
+- `VERCEL_ORG_ID` - From `.vercel/project.json`
+- `VERCEL_PROJECT_ID` - From `.vercel/project.json`
 
 ---
 
@@ -491,16 +499,17 @@ cd packages/desktop && bun run dev
 # Visit http://localhost:5173
 ```
 
-### Deploy to Vercel
+### Deploy Everything (Web + Desktop)
 ```bash
-cd packages/desktop && bun run build && cd dist && vercel --prod --yes
+git push origin master
+# GitHub Actions handles: semantic version, Electron builds, Vercel deploy
 ```
 
-### Create Desktop Release
+### Manual Version Bump (if needed)
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
-# GitHub Actions builds all platforms
+git tag v1.x.x
+git push origin v1.x.x
+# Triggers Electron builds + upload to that release
 ```
 
 ---
@@ -540,6 +549,8 @@ git push origin v1.0.0
 - ✅ Video preview with scrubbing (input + output)
 - ✅ Download functionality (~/Downloads on Electron, blob on web)
 - ✅ Smooth animations (CSS for infinite, optimized springs)
+- ✅ Unified CI/CD (GitHub Actions deploys Vercel + Electron)
+- ✅ Version display working (from git tags)
 - ⚠️ Android native blocked (package issues)
 
 ---
