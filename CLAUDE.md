@@ -8,7 +8,7 @@ If you are starting a new session, **STOP** and read this entire file BEFORE doi
 
 Video splitter app that cuts videos into smaller durations for social media (Instagram, TikTok, etc.)
 
-**Last Updated**: 2026-01-05 (Session 6) - Video Preview, Animation Fixes
+**Last Updated**: 2026-01-05 (Session 7) - Audio Sync Fix, E2E Tests, Unit Tests
 
 ---
 
@@ -24,7 +24,7 @@ Video splitter app that cuts videos into smaller durations for social media (Ins
 
 ---
 
-## Current Status (Session 6 - Jan 5, 2026)
+## Current Status (Session 7 - Jan 5, 2026)
 
 ### ✅ What's Working
 
@@ -45,9 +45,16 @@ Video splitter app that cuts videos into smaller durations for social media (Ins
 - ✅ Works on Chrome 102+ desktop browsers
 - ✅ Video preview with scrubbing (input + output)
 - ✅ Download functionality (blob URLs)
+- ✅ Audio/video sync fixed (uses clip's actual duration after split)
 - ⚠️ VERY SLOW (30-60 min for 4K videos) - WebCodecs limitation
 - ⚠️ Limited Android support (Chrome < 102 won't work)
 - ✅ Shows install prompt for PWA on mobile
+
+**Testing** (Session 7):
+- ✅ 62 unit tests (vitest) - segment calculations + ffmpeg utilities
+- ✅ E2E tests (Playwright) - browser-based video splitting
+- ✅ Smoke tests for quick iteration (~7s)
+- ✅ SSIM-based frame comparison for quality verification
 
 **Animation Performance** (Session 6 Fixes):
 - ✅ Moved orb animations to CSS (compositor thread)
@@ -276,6 +283,23 @@ bun run electron:build:win    # Windows only
 cd packages/desktop
 bun run build
 # Deploy: cd dist && vercel --prod --yes
+```
+
+### Running Tests
+```bash
+cd packages/desktop
+
+# Unit tests (62 tests, ~3s)
+bun run test           # Run once
+bun run test:watch     # Watch mode
+
+# E2E tests (Playwright)
+bun run test:e2e       # Full suite (slow, includes video processing)
+bun run test:e2e:smoke # Quick smoke tests (~7s)
+bun run test:e2e:ui    # Interactive UI mode
+
+# All tests
+bun run test:all       # Unit + E2E
 ```
 
 ---

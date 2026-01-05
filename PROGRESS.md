@@ -1,7 +1,7 @@
 # Clipchop - Implementation Progress
 
 ## Current Status: Multi-Platform Complete (Desktop), Mobile Blocked
-**Last Updated**: 2026-01-05 (Session 6) - Video Preview, Animation Fixes, CI/CD Improvements
+**Last Updated**: 2026-01-05 (Session 7) - Audio Sync Fix, E2E Tests, Unit Tests
 
 ---
 
@@ -31,6 +31,11 @@
 - [x] Test file naming patterns (sequential and timestamp)
 - [x] Test edge cases (short videos, exact matches, uneven splits)
 - [x] Create validation function for segment timing
+- [x] Set up Playwright for E2E tests
+- [x] Create ffmpeg-based video utilities for test verification
+- [x] Unit tests for ffmpeg utilities (19 tests)
+- [x] E2E tests for browser-based video splitting
+- [x] SSIM-based frame comparison for quality verification
 
 ## Phase 3: UI/UX Polish
 - [x] Custom Motion animations (fluid/liquid springs)
@@ -59,6 +64,48 @@
 ---
 
 ## Completed Items
+
+### 2026-01-05 (Session 7) - Audio Sync Fix, E2E Tests, Unit Tests
+**Updates**: Fixed audio/video sync issue, comprehensive test suite
+
+#### Audio/Video Sync Fix:
+- **Root Cause**: When splitting at 30s, the actual split happens at a keyframe (e.g., 29.98s due to keyframe alignment), but we were setting `sprite.time.duration` to exactly 30s (our calculated duration)
+- **Fix**: Now use `segmentClip.meta.duration` (the clip's actual duration after split) instead of pre-calculated duration
+- **File Modified**: `src/hooks/use-video-splitter.ts`
+
+#### Test Infrastructure:
+- **Unit Tests** (62 total, ~3s runtime):
+  - `src/lib/video-utils.test.ts` - 43 tests for segment calculations
+  - `e2e/utils/video-utils.unit.test.ts` - 19 tests for ffmpeg utilities
+- **E2E Tests** (Playwright, browser-based):
+  - Video upload and metadata display
+  - Segment calculation UI verification
+  - Full video split with WebCodecs
+  - Frame comparison using SSIM (perceptual similarity)
+  - Progress display during split
+  - Start over functionality
+- **Smoke Tests**: Quick tests tagged with `@smoke` for fast iteration
+
+#### Test Commands:
+```bash
+bun run test           # Unit tests only (62 tests)
+bun run test:watch     # Unit tests in watch mode
+bun run test:e2e       # Full E2E tests
+bun run test:e2e:smoke # Quick smoke tests (~7s)
+bun run test:all       # Both unit and E2E
+```
+
+#### SSIM Frame Comparison:
+- Switched from PSNR to SSIM for perceptual frame comparison
+- SSIM correlates better with human visual perception
+- Used to verify split happens at correct timestamps
+
+#### Files Created/Modified:
+- `e2e/utils/video-utils.unit.test.ts` - New unit tests for ffmpeg utilities
+- `e2e/tests/video-split.spec.ts` - Updated with smoke tags, H.264 support
+- `e2e/utils/video-utils.ts` - Changed from PSNR to SSIM comparison
+- `vitest.config.ts` - Added e2e unit test paths
+- `package.json` - Added test scripts
 
 ### 2026-01-05 (Session 6) - Video Preview, Animation Fixes, CI/CD Improvements
 **Updates**: Video preview with scrubbing, animation performance fixes, download functionality
@@ -260,11 +307,37 @@ bun run electron:build:linux  # Linux only
 
 ## Test Coverage
 
-Run tests: `bun run test:run`
-Watch mode: `bun run test`
+### Unit Tests (62 tests, ~3s)
+```bash
+bun run test           # Run once
+bun run test:watch     # Watch mode
+```
 
-Current test file: `src/lib/video-utils.test.ts`
-- 43 tests covering all split timing logic
-- Tests validate segment boundaries are contiguous
-- Tests verify duration calculations
-- Tests check edge cases
+**Files:**
+- `src/lib/video-utils.test.ts` - 43 tests for segment calculations
+- `e2e/utils/video-utils.unit.test.ts` - 19 tests for ffmpeg utilities
+
+**Coverage:**
+- Segment boundary calculations
+- Duration conversions (μs ↔ s)
+- File naming patterns
+- Edge cases (zero, negative, short videos)
+- FFmpeg metadata extraction
+- SSIM frame comparison
+- Video creation and cleanup
+
+### E2E Tests (Playwright)
+```bash
+bun run test:e2e       # Full suite
+bun run test:e2e:smoke # Quick smoke tests (~7s)
+bun run test:e2e:ui    # Interactive UI mode
+```
+
+**Coverage:**
+- Video upload via file input
+- Metadata display in UI
+- Segment calculation display
+- WebCodecs video splitting
+- Progress indicator during split
+- Frame comparison at split boundaries
+- Start over functionality

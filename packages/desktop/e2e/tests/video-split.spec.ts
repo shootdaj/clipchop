@@ -2,6 +2,7 @@ import { test, expect, Page } from '@playwright/test'
 import * as path from 'path'
 import * as fs from 'fs'
 import * as os from 'os'
+import { fileURLToPath } from 'url'
 import {
   getVideoMetadata,
   extractFrame,
@@ -11,8 +12,16 @@ import {
   cleanupTempFiles,
 } from '../utils/video-utils'
 
+// Get __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
 // Test fixtures
-const TEST_VIDEO_PATH = process.env.TEST_VIDEO_PATH || path.join(os.homedir(), 'Downloads', '20260103_175100.mp4')
+// Use H.264 test video for WebCodecs compatibility (HEVC not supported in browsers)
+const TEST_VIDEO_H264 = path.join(__dirname, '..', 'fixtures', 'test-video-h264.mp4')
+const TEST_VIDEO_PATH = process.env.TEST_VIDEO_PATH || (
+  fs.existsSync(TEST_VIDEO_H264) ? TEST_VIDEO_H264 : path.join(os.homedir(), 'Downloads', '20260103_175100.mp4')
+)
 const DOWNLOADS_DIR = path.join(os.tmpdir(), 'clipchop-e2e-downloads')
 
 test.describe('Video Splitting E2E Tests', () => {
@@ -45,7 +54,7 @@ test.describe('Video Splitting E2E Tests', () => {
     await expect(page.locator('h1')).toContainText('Clipchop')
   })
 
-  test('should load video and display correct metadata', async ({ page }) => {
+  test('should load video and display correct metadata @smoke', async ({ page }) => {
     // Upload video
     const fileInput = page.locator('input[type="file"]')
     await fileInput.setInputFiles(testVideoPath)
@@ -59,7 +68,7 @@ test.describe('Video Splitting E2E Tests', () => {
     await expect(page.locator('text=Input Video')).toBeVisible()
   })
 
-  test('should calculate correct number of segments', async ({ page }) => {
+  test('should calculate correct number of segments @smoke', async ({ page }) => {
     // Upload video
     await page.locator('input[type="file"]').setInputFiles(testVideoPath)
     await expect(page.locator('text=/⏱\\d+m \\d+s/')).toBeVisible({ timeout: 10000 })
@@ -132,9 +141,9 @@ test.describe('Video Splitting E2E Tests', () => {
     }
   })
 
-  test('should match frame at split boundary', async ({ page }) => {
+  test('should match frame at split boundary', async ({ page, context }) => {
     // This test verifies that the split happens at the correct timestamp
-    // by comparing frames from input and output videos
+    // by extracting frames from both input and output videos and comparing them
 
     // Upload video
     await page.locator('input[type="file"]').setInputFiles(testVideoPath)
@@ -152,34 +161,69 @@ test.describe('Video Splitting E2E Tests', () => {
       timeout: 5 * 60 * 1000,
     })
 
-    // Extract frame from input video at t=0
-    const inputFrame0 = extractFrame(testVideoPath, 0)
+    // Extract reference frames from INPUT video at split boundaries
+    // Use 1s offset to avoid potential black first frames from encoding
+    const inputFrame0 = extractFrame(testVideoPath, 1)    // 1s into clip 1
+    const inputFrame30 = extractFrame(testVideoPath, 31)  // 1s into clip 2
+    const inputFrame60 = extractFrame(testVideoPath, 61)  // 1s into clip 3
 
-    // Take screenshot of first output clip's first frame for visual comparison
-    // (We can't easily extract frames from blob URLs, so we use visual comparison)
-    await page.evaluate(() => {
-      const videos = document.querySelectorAll('video')
-      if (videos[1]) {
-        videos[1].currentTime = 0
+    // Download output clips from browser blobs to temp files
+    const outputClips = await page.evaluate(async () => {
+      const videos = document.querySelectorAll('video[src^="blob:"]')
+      const clips: { index: number; base64: string }[] = []
+
+      // Skip first video (input preview), get output clips
+      for (let i = 1; i < Math.min(videos.length, 4); i++) {
+        const response = await fetch(videos[i].src)
+        const blob = await response.blob()
+        const buffer = await blob.arrayBuffer()
+        const bytes = new Uint8Array(buffer)
+
+        // Convert to base64 in chunks to avoid stack overflow
+        let binary = ''
+        const chunkSize = 8192
+        for (let j = 0; j < bytes.length; j += chunkSize) {
+          binary += String.fromCharCode(...bytes.slice(j, j + chunkSize))
+        }
+        clips.push({ index: i, base64: btoa(binary) })
       }
+      return clips
     })
 
-    await page.waitForTimeout(500) // Wait for frame to render
+    // Save output clips to temp files and extract frames from 1s in
+    const outputFrames: string[] = []
+    for (const clip of outputClips) {
+      const clipPath = path.join(os.tmpdir(), `output_clip_${clip.index}_${Date.now()}.mp4`)
+      const buffer = Buffer.from(clip.base64, 'base64')
+      fs.writeFileSync(clipPath, buffer)
 
-    // Verify the output clip thumbnail shows the same scene
-    // This is a visual regression test
-    const clipThumbnail = page.locator('.group video').first()
-    await expect(clipThumbnail).toBeVisible()
+      // Extract frame from 1s into output clip to avoid black first frames
+      const frameOutput = extractFrame(clipPath, 1)
+      outputFrames.push(frameOutput)
 
-    // Take screenshot for visual comparison
-    const screenshot = await clipThumbnail.screenshot()
-    expect(screenshot.length).toBeGreaterThan(1000) // Has actual content
+      // Clean up clip file
+      fs.unlinkSync(clipPath)
+    }
 
-    // Clean up
-    fs.unlinkSync(inputFrame0)
+    // Compare frames: output clip N's first frame should match input at (N-1)*30s
+    const inputFrames = [inputFrame0, inputFrame30, inputFrame60]
+
+    for (let i = 0; i < Math.min(outputFrames.length, inputFrames.length); i++) {
+      const similarity = compareFrames(inputFrames[i], outputFrames[i])
+      console.log(`Clip ${i + 1} frame similarity: ${(1 - similarity) * 100}%`)
+
+      // SSIM > 0.5 means perceptually similar (difference < 0.5)
+      // For web re-encoding, we expect at least 50% structural similarity
+      expect(similarity).toBeLessThan(0.5)
+    }
+
+    // Clean up all frame files
+    for (const frame of [...inputFrames, ...outputFrames]) {
+      try { fs.unlinkSync(frame) } catch { /* ignore */ }
+    }
   })
 
-  test('should handle different split durations', async ({ page }) => {
+  test('should handle different split durations @smoke', async ({ page }) => {
     // Upload video
     await page.locator('input[type="file"]').setInputFiles(testVideoPath)
     await expect(page.locator('text=/⏱\\d+m \\d+s/')).toBeVisible({ timeout: 10000 })
@@ -278,11 +322,22 @@ test.describe('Video Splitting E2E Tests', () => {
 })
 
 test.describe('Video Quality Options', () => {
-  const testVideoPath = process.env.TEST_VIDEO_PATH || path.join(os.homedir(), 'Downloads', '20260103_175100.mp4')
+  const testVideoPath = TEST_VIDEO_PATH
+  let is4KVideo = false
+
+  test.beforeAll(() => {
+    if (fs.existsSync(testVideoPath)) {
+      const meta = getVideoMetadata(testVideoPath)
+      is4KVideo = Math.max(meta.width, meta.height) >= 2160
+      console.log(`Test video is ${is4KVideo ? '4K+' : 'below 4K'}: ${meta.width}x${meta.height}`)
+    }
+  })
 
   test.skip(!fs.existsSync(testVideoPath), 'Skipping - test video not found')
 
   test('should show quality warning for 4K videos', async ({ page }) => {
+    test.skip(!is4KVideo, 'Test video is not 4K - skipping 4K warning test')
+
     await page.goto('/')
 
     // Upload 4K video
@@ -297,6 +352,8 @@ test.describe('Video Quality Options', () => {
   })
 
   test('should show faster estimate for downscaled quality', async ({ page }) => {
+    test.skip(!is4KVideo, 'Test video is not 4K - skipping downscale test')
+
     await page.goto('/')
 
     await page.locator('input[type="file"]').setInputFiles(testVideoPath)

@@ -53,37 +53,60 @@ export function extractFrame(
 }
 
 /**
- * Compare two images using ImageMagick (returns difference percentage)
- * Lower value = more similar (0 = identical)
+ * Compare two images using ffmpeg SSIM metric (better correlation with human perception)
+ * Returns a value between 0 and 1 (0 = identical, 1 = completely different)
  */
 export function compareFrames(image1: string, image2: string): number {
   try {
-    // Use ImageMagick compare with SSIM metric
-    const result = execSync(
-      `compare -metric RMSE "${image1}" "${image2}" null: 2>&1 || true`,
-      { encoding: 'utf-8' }
-    )
-    // Parse result like "1234.56 (0.0123)"
-    const match = result.match(/\(([\d.]+)\)/)
-    return match ? parseFloat(match[1]) : 1
-  } catch {
-    // If compare fails (different dimensions), resize and retry
-    const tmpResized = path.join(os.tmpdir(), `resized_${Date.now()}.jpg`)
-    const dims = execSync(
-      `identify -format "%wx%h" "${image1}"`,
+    // Verify files exist
+    if (!fs.existsSync(image1)) {
+      console.error(`Image 1 does not exist: ${image1}`)
+      return 1
+    }
+    if (!fs.existsSync(image2)) {
+      console.error(`Image 2 does not exist: ${image2}`)
+      return 1
+    }
+
+    console.log(`Comparing frames:\n  Image 1: ${image1} (${fs.statSync(image1).size} bytes)\n  Image 2: ${image2} (${fs.statSync(image2).size} bytes)`)
+
+    // Get dimensions of first image
+    const probe1 = execSync(
+      `ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0 "${image1}"`,
       { encoding: 'utf-8' }
     ).trim()
+    const [width, height] = probe1.split(',').map(Number)
 
-    execSync(`convert "${image2}" -resize ${dims}! "${tmpResized}"`)
+    // Use ffmpeg SSIM for perceptual comparison (better than PSNR for human perception)
+    // Scale image2 to match image1 dimensions, then compare
+    const ffmpegCmd = `ffmpeg -i "${image1}" -i "${image2}" -filter_complex "[1:v]scale=${width}:${height}[scaled];[0:v][scaled]ssim" -f null - 2>&1`
 
-    const result = execSync(
-      `compare -metric RMSE "${image1}" "${tmpResized}" null: 2>&1 || true`,
-      { encoding: 'utf-8' }
-    )
-    fs.unlinkSync(tmpResized)
+    const fullOutput = execSync(ffmpegCmd, { encoding: 'utf-8' })
+    const ssimLine = fullOutput.split('\n').find(line => line.includes('SSIM'))
 
-    const match = result.match(/\(([\d.]+)\)/)
-    return match ? parseFloat(match[1]) : 1
+    if (!ssimLine) {
+      console.log('SSIM not found in output')
+      return 1
+    }
+
+    // Parse SSIM All value (0-1 scale, 1 = identical)
+    // Example: "SSIM Y:0.850000 (8.23) U:0.950000 (13.01) V:0.930000 (11.55) All:0.870000 (8.87)"
+    const match = ssimLine.match(/All:([\d.]+)/)
+    if (match) {
+      const ssim = parseFloat(match[1])
+      // SSIM is already 0-1 where 1 = identical
+      // Convert to our scale where 0 = identical, 1 = different
+      const difference = 1 - ssim
+      console.log(`SSIM: ${ssim.toFixed(4)} -> difference score: ${difference.toFixed(4)} (${(ssim * 100).toFixed(1)}% similar)`)
+      return difference
+    }
+
+    console.log('Could not parse SSIM value')
+    return 1
+
+  } catch (error) {
+    console.error('Frame comparison error:', error)
+    return 1
   }
 }
 

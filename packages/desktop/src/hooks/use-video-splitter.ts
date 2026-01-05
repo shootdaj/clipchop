@@ -220,7 +220,11 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
 
         const sprite = new OffscreenSprite(segmentClip)
         await sprite.ready
-        sprite.time = { offset: 0, duration: toMicroseconds(segment.duration) }
+        // Use the clip's actual duration after split (may differ from segment.duration due to keyframe alignment)
+        // This ensures audio and video stay in sync
+        const actualClipDuration = segmentClip.meta.duration
+        console.log(`Segment ${i + 1}: expected duration ${segment.duration}s, actual clip duration ${actualClipDuration / 1_000_000}s`)
+        sprite.time = { offset: 0, duration: actualClipDuration }
         // Set rect to scale video to fill the output canvas
         sprite.rect.x = 0
         sprite.rect.y = 0

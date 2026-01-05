@@ -15,3 +15,6 @@ packages/mobile/package-lock.json
 test-results/
 playwright-report/
 playwright/.cache/
+
+# E2E test fixtures (generated locally)
+packages/desktop/e2e/fixtures/

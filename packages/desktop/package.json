@@ -21,10 +21,15 @@
     "electron:build:mac": "npm run electron:build -- --mac",
     "electron:build:win": "npm run electron:build -- --win",
     "electron:build:linux": "npm run electron:build -- --linux",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run",
     "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test --grep '@smoke'",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
-    "test:e2e:debug": "playwright test --debug"
+    "test:e2e:debug": "playwright test --debug",
+    "test:all": "vitest run && playwright test"
   },
   "dependencies": {
     "@electron/remote": "^2.1.3",
