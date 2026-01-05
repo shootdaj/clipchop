@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { MP4Clip, Combinator, OffscreenSprite } from '@webav/av-cliper'
-import { toMicroseconds, calculateSegmentBoundaries, getH264LevelCode, getH264ProfileCode, getVideoBitrate, getMobileThrottleDelay } from '@/lib/video-utils'
+import { toMicroseconds, calculateSegmentBoundaries, getH264LevelCode, getH264ProfileCode, getMobileThrottleDelay, getMobileOptimizedSettings } from '@/lib/video-utils'
 
 export interface VideoMetadata {
   duration: number // seconds
@@ -173,33 +173,28 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
         }
 
         // Export segment to blob
-        let outputWidth = metadata.width
-        let outputHeight = metadata.height
-
-        // Detect mobile early - affects encoding parameters (fps, bitrate, throttling)
+        // Detect mobile/Capacitor early - affects all encoding parameters
         const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
 
-        if (maxResolution !== null) {
-          const maxDimension = Math.max(metadata.width, metadata.height)
-          if (maxDimension > maxResolution) {
-            const scale = maxResolution / maxDimension
-            outputWidth = Math.round(metadata.width * scale / 2) * 2
-            outputHeight = Math.round(metadata.height * scale / 2) * 2
-            console.log(`Downscaling from ${metadata.width}x${metadata.height} to ${outputWidth}x${outputHeight}`)
-          }
-        }
+        // Get mobile-optimized settings (aggressive for Capacitor WebView)
+        const optimized = getMobileOptimizedSettings(
+          isMobile,
+          metadata.width,
+          metadata.height,
+          maxResolution
+        )
+
+        const outputWidth = optimized.width
+        const outputHeight = optimized.height
+        const outputFps = optimized.fps
+        const bitrate = optimized.bitrate
 
         // Use utility functions for codec configuration
         const levelCode = getH264LevelCode(outputWidth, outputHeight)
         const codecProfile = getH264ProfileCode(isMobile)
-        const bitrate = getVideoBitrate(maxResolution)
         const mobileThrottle = getMobileThrottleDelay(isMobile)
 
-        // Mobile: use 30fps to reduce encoder stress (mobile WebCodecs struggles with 60fps)
-        // Desktop: use 60fps to preserve motion from high-fps sources
-        const outputFps = isMobile ? 30 : 60
-
-        console.log(`Device: ${isMobile ? 'mobile' : 'desktop'}, bitrate: ${bitrate}, codec: avc1.${codecProfile}${levelCode}, throttle: ${mobileThrottle}ms, fps: ${outputFps}`)
+        console.log(`Device: ${isMobile ? 'mobile/capacitor' : 'desktop'}, ${metadata.width}x${metadata.height} → ${outputWidth}x${outputHeight}, bitrate: ${bitrate}, fps: ${outputFps}, throttle: ${mobileThrottle}ms`)
 
         const combinator = new Combinator({
           width: outputWidth,

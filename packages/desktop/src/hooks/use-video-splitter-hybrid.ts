@@ -1,5 +1,5 @@
 import { useVideoSplitter as useElectronSplitter } from './use-video-splitter-electron'
-import { useVideoSplitter as useFFmpegWasmSplitter } from './use-video-splitter-ffmpeg-wasm'
+import { useVideoSplitter as useWebCodecsSplitter } from './use-video-splitter'
 
 export function useVideoSplitter() {
   const isElectron = typeof window !== 'undefined' && window.electron !== undefined
@@ -16,13 +16,13 @@ export function useVideoSplitter() {
       }
     }
   } else {
-    // Use ffmpeg.wasm for web - same FFmpeg logic as Electron, handles VFR correctly
-    const wasmHook = useFFmpegWasmSplitter()
+    // Use WebCodecs for web (works on desktop, investigating mobile issues)
+    const webCodecsHook = useWebCodecsSplitter()
     return {
-      ...wasmHook,
+      ...webCodecsHook,
       loadVideo: async (fileOrPath?: File | string) => {
         if (fileOrPath instanceof File) {
-          return wasmHook.loadVideo(fileOrPath)
+          return webCodecsHook.loadVideo(fileOrPath)
         }
         throw new Error('File required for web mode')
       }

@@ -122,8 +122,44 @@ export const getVideoBitrate = (maxResolution: number | null): number => {
 // When encoder queue builds up, video becomes choppy. Constant delays help prevent this.
 export const getMobileThrottleDelay = (isMobile: boolean): number => {
   // Desktop: no throttling needed
-  // Mobile: 10ms delay between chunks to give encoder breathing room
-  return isMobile ? 10 : 0
+  // Mobile: 50ms delay between chunks - aggressive throttling to prevent queue buildup
+  // Mobile WebCodecs hardware encoders can't keep up with fast frame submission
+  return isMobile ? 50 : 0
+}
+
+// Get mobile-optimized settings
+export const getMobileOptimizedSettings = (
+  isMobile: boolean,
+  originalWidth: number,
+  originalHeight: number,
+  userMaxResolution: number | null
+): { width: number; height: number; fps: number; bitrate: number } => {
+  if (!isMobile) {
+    // Desktop: use user settings or original
+    const maxRes = userMaxResolution || Math.max(originalWidth, originalHeight)
+    const scale = maxRes < Math.max(originalWidth, originalHeight)
+      ? maxRes / Math.max(originalWidth, originalHeight)
+      : 1
+    return {
+      width: Math.round(originalWidth * scale / 2) * 2,
+      height: Math.round(originalHeight * scale / 2) * 2,
+      fps: 60,
+      bitrate: getVideoBitrate(userMaxResolution),
+    }
+  }
+
+  // Mobile: aggressive optimization to prevent encoder overload
+  // Force max 720p regardless of user setting (mobile encoders struggle with HD+)
+  const mobileMaxRes = Math.min(userMaxResolution || 1280, 1280)
+  const maxDim = Math.max(originalWidth, originalHeight)
+  const scale = maxDim > mobileMaxRes ? mobileMaxRes / maxDim : 1
+
+  return {
+    width: Math.round(originalWidth * scale / 2) * 2,
+    height: Math.round(originalHeight * scale / 2) * 2,
+    fps: 24, // Cinematic fps - fewer frames = less encoder stress
+    bitrate: 1500000, // 1.5 Mbps - lower bitrate for mobile
+  }
 }
 
 // Validate segment timing accuracy

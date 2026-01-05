@@ -58,14 +58,10 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
   const loadFFmpeg = useCallback(async () => {
     if (loadedRef.current) return
 
-    // Check for SharedArrayBuffer support
-    if (typeof SharedArrayBuffer === 'undefined') {
-      throw new Error('SharedArrayBuffer not available. Ensure COOP/COEP headers are set.')
-    }
-
     const ffmpeg = new FFmpeg()
-    // Use jsdelivr (better CORS support) and include worker
-    const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd'
+
+    // Check for SharedArrayBuffer support to decide which version to use
+    const hasSharedArrayBuffer = typeof SharedArrayBuffer !== 'undefined'
 
     ffmpeg.on('log', ({ message }) => {
       console.log('[ffmpeg]', message)
@@ -75,15 +71,30 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
       setProgress(p => ({ ...p, percent: prog * 100 }))
     })
 
-    console.log('Loading ffmpeg.wasm from jsdelivr...')
+    if (hasSharedArrayBuffer) {
+      // Use multi-threaded version (faster, requires SharedArrayBuffer)
+      console.log('Loading ffmpeg.wasm multi-threaded version...')
+      const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd'
 
-    const [coreURL, wasmURL, workerURL] = await Promise.all([
-      toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-      toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-      toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, 'text/javascript'),
-    ])
+      const [coreURL, wasmURL, workerURL] = await Promise.all([
+        toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+        toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+        toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, 'text/javascript'),
+      ])
 
-    await ffmpeg.load({ coreURL, wasmURL, workerURL })
+      await ffmpeg.load({ coreURL, wasmURL, workerURL })
+    } else {
+      // Use single-threaded version (slower, but works without SharedArrayBuffer)
+      console.log('Loading ffmpeg.wasm single-threaded version (no SharedArrayBuffer)...')
+      const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core-st@0.12.6/dist/umd'
+
+      const [coreURL, wasmURL] = await Promise.all([
+        toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+        toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+      ])
+
+      await ffmpeg.load({ coreURL, wasmURL })
+    }
 
     console.log('ffmpeg.wasm loaded successfully')
     ffmpegRef.current = ffmpeg
