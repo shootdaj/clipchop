@@ -1,3 +1,10 @@
+## [1.2.5](https://github.com/shootdaj/clipchop/compare/v1.2.4...v1.2.5) (2026-01-05)
+
+
+### Bug Fixes
+
+* Resolve TypeScript React types conflict in CI ([aeaaa81](https://github.com/shootdaj/clipchop/commit/aeaaa8198f5fc68525e7ff4672f1d3364f2e4b3d))
+
 ## [1.2.4](https://github.com/shootdaj/clipchop/compare/v1.2.3...v1.2.4) (2026-01-05)
 
 
