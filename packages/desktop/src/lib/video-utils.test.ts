@@ -437,17 +437,14 @@ describe('buildH264CodecString', () => {
 
 describe('getVideoBitrate', () => {
   it('returns 2 Mbps for SD (1280px)', () => {
-    expect(getVideoBitrate(1280, false)).toBe(2000000)
-    expect(getVideoBitrate(1280, true)).toBe(2000000)
+    expect(getVideoBitrate(1280)).toBe(2000000)
   })
 
   it('returns 4 Mbps for HD (1920px)', () => {
-    expect(getVideoBitrate(1920, false)).toBe(4000000)
-    expect(getVideoBitrate(1920, true)).toBe(4000000)
+    expect(getVideoBitrate(1920)).toBe(4000000)
   })
 
   it('returns 5 Mbps for Full Quality (null)', () => {
-    expect(getVideoBitrate(null, false)).toBe(5000000)
-    expect(getVideoBitrate(null, true)).toBe(5000000)
+    expect(getVideoBitrate(null)).toBe(5000000)
   })
 })

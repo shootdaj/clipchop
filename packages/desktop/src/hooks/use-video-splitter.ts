@@ -190,7 +190,7 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
         const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
         const levelCode = getH264LevelCode(outputWidth, outputHeight)
         const codecProfile = getH264ProfileCode(isMobile)
-        const bitrate = getVideoBitrate(maxResolution, isMobile)
+        const bitrate = getVideoBitrate(maxResolution)
 
         console.log(`Device: ${isMobile ? 'mobile' : 'desktop'}, bitrate: ${bitrate}, codec: avc1.${codecProfile}${levelCode}`)
 

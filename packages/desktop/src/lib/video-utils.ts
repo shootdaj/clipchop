@@ -108,7 +108,7 @@ export const buildH264CodecString = (width: number, height: number, isMobile: bo
 }
 
 // Get appropriate bitrate based on resolution
-export const getVideoBitrate = (maxResolution: number | null, isMobile: boolean): number => {
+export const getVideoBitrate = (maxResolution: number | null): number => {
   if (maxResolution === 1280) {
     return 2000000 // 2 Mbps for SD
   } else if (maxResolution === 1920) {
