@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { Capacitor } from '@capacitor/core'
-import { VideoSplitter, VideoMetadata as NativeMetadata, SegmentInfo } from '@/plugins/video-splitter'
+import { VideoSplitter, SegmentInfo } from '@/plugins/video-splitter'
 
 export interface VideoMetadata {
   duration: number
