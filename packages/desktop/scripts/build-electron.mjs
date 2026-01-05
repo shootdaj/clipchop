@@ -33,32 +33,39 @@ function copyFfmpegBinaries() {
       fs.mkdirSync(targetScopeDir, { recursive: true })
     }
 
-    // Check if target exists and is a symlink
+    // Check if target exists
     if (fs.existsSync(targetPath)) {
       const stat = fs.lstatSync(targetPath)
       if (stat.isSymbolicLink()) {
+        // Resolve symlink (bun development)
         const realPath = fs.realpathSync(targetPath)
         fs.rmSync(targetPath, { recursive: true })
         execSync(`cp -r "${realPath}" "${targetPath}"`, { stdio: 'inherit' })
         console.log(`Resolved symlink: ${pkg.scope}/${pkg.name}`)
+      } else {
+        console.log(`Already exists: ${pkg.scope}/${pkg.name}`)
       }
     } else {
-      // Package doesn't exist in local node_modules, find it in bun cache
+      // Package doesn't exist in local node_modules, try bun cache
       // Bun cache format: @scope+name@version/node_modules/@scope/name
       const cachePattern = `${pkg.scope}+${pkg.name}@`
 
       try {
-        const bunCacheEntries = fs.readdirSync(bunCacheRoot)
-        const matchingEntry = bunCacheEntries.find(e => e.startsWith(cachePattern))
+        if (fs.existsSync(bunCacheRoot)) {
+          const bunCacheEntries = fs.readdirSync(bunCacheRoot)
+          const matchingEntry = bunCacheEntries.find(e => e.startsWith(cachePattern))
 
-        if (matchingEntry) {
-          const sourcePath = resolve(bunCacheRoot, matchingEntry, 'node_modules', pkg.scope, pkg.name)
-          if (fs.existsSync(sourcePath)) {
-            execSync(`cp -r "${sourcePath}" "${targetPath}"`, { stdio: 'inherit' })
-            console.log(`Copied from bun cache: ${pkg.scope}/${pkg.name}`)
+          if (matchingEntry) {
+            const sourcePath = resolve(bunCacheRoot, matchingEntry, 'node_modules', pkg.scope, pkg.name)
+            if (fs.existsSync(sourcePath)) {
+              execSync(`cp -r "${sourcePath}" "${targetPath}"`, { stdio: 'inherit' })
+              console.log(`Copied from bun cache: ${pkg.scope}/${pkg.name}`)
+            }
+          } else {
+            console.log(`Not found in bun cache: ${pkg.scope}/${pkg.name}`)
           }
         } else {
-          console.log(`Not found in bun cache: ${pkg.scope}/${pkg.name}`)
+          console.log(`No bun cache found, skipping: ${pkg.scope}/${pkg.name}`)
         }
       } catch (e) {
         console.log(`Could not access bun cache for ${pkg.scope}/${pkg.name}:`, e.message)
