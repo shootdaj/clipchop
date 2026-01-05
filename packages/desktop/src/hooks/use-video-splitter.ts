@@ -209,14 +209,20 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
 
         if (maxResolution !== null) {
           if (maxResolution === 1280) {
-            bitrate = 2000000 // 2 Mbps for SD - was too low at 800k
+            bitrate = 2000000 // 2 Mbps for SD
           } else if (maxResolution === 1920) {
             bitrate = 4000000 // 4 Mbps for HD
           }
         }
 
-        // Use Baseline profile (42) instead of High profile (64) for mobile compatibility
-        const codecProfile = '4200' // Baseline profile - works on all phones
+        // Detect mobile devices and use appropriate H.264 profile
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+          || (navigator.maxTouchPoints > 0 && window.innerWidth < 1024)
+
+        // Mobile: Baseline profile (42) for compatibility
+        // Desktop: High profile (64) for better compression
+        const codecProfile = isMobile ? '4200' : '6400'
+        console.log(`Device: ${isMobile ? 'mobile' : 'desktop'}, profile: ${isMobile ? 'Baseline' : 'High'}`)
         console.log(`Combinator config: ${outputWidth}x${outputHeight}, bitrate: ${bitrate}, codec: avc1.${codecProfile}${levelCode}`)
 
         const combinator = new Combinator({
