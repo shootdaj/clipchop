@@ -189,6 +189,7 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
         const totalPixels = outputWidth * outputHeight
         // Use Baseline profile (42) for maximum mobile compatibility
         // High profile (64) causes choppy playback on many phones
+        // Level selection based on resolution - Level 3.1 is safe minimum for most videos
         let levelCode = '1f' // Level 3.1 default
 
         if (totalPixels > 8912896) {
@@ -199,10 +200,8 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
           levelCode = '32' // Level 5.0
         } else if (totalPixels > 2073600) {
           levelCode = '28' // Level 4.0
-        } else if (totalPixels > 921600) {
-          levelCode = '1f' // Level 3.1
         } else {
-          levelCode = '1e' // Level 3.0 for smaller videos
+          levelCode = '1f' // Level 3.1 (safe for 720p-1080p)
         }
 
         let bitrate = 5000000

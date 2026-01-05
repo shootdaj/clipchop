@@ -32,6 +32,24 @@ Video splitter app that cuts videos into smaller durations for social media (Ins
 
 To deploy: Just `git push origin master` - that's it!
 
+## 🧪 PRE-COMMIT TESTING REQUIREMENT
+
+**ALWAYS run tests before committing code changes:**
+
+```bash
+cd packages/desktop
+
+# 1. Run unit tests (must all pass)
+bun run test
+
+# 2. Run E2E smoke tests (must all pass)
+bun run test:e2e:smoke
+
+# 3. If both pass, safe to commit
+```
+
+**DO NOT commit if any test fails.** Fix the issue first.
+
 ---
 
 ## Current Status (Session 8 - Jan 5, 2026)
