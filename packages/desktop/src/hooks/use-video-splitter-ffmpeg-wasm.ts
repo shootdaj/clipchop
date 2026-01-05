@@ -57,23 +57,35 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
 
   const loadFFmpeg = useCallback(async () => {
     if (loadedRef.current) return
-    
+
+    // Check for SharedArrayBuffer support
+    if (typeof SharedArrayBuffer === 'undefined') {
+      throw new Error('SharedArrayBuffer not available. Ensure COOP/COEP headers are set.')
+    }
+
     const ffmpeg = new FFmpeg()
-    const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd'
-    
+    // Use jsdelivr (better CORS support) and include worker
+    const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd'
+
     ffmpeg.on('log', ({ message }) => {
-      console.log(message)
+      console.log('[ffmpeg]', message)
     })
-    
+
     ffmpeg.on('progress', ({ progress: prog }) => {
       setProgress(p => ({ ...p, percent: prog * 100 }))
     })
-    
-    await ffmpeg.load({
-      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-      wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-    })
-    
+
+    console.log('Loading ffmpeg.wasm from jsdelivr...')
+
+    const [coreURL, wasmURL, workerURL] = await Promise.all([
+      toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+      toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+      toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, 'text/javascript'),
+    ])
+
+    await ffmpeg.load({ coreURL, wasmURL, workerURL })
+
+    console.log('ffmpeg.wasm loaded successfully')
     ffmpegRef.current = ffmpeg
     loadedRef.current = true
   }, [])

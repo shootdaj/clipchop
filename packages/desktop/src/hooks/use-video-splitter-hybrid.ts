@@ -16,8 +16,7 @@ export function useVideoSplitter() {
       }
     }
   } else {
-    // Use ffmpeg.wasm for all web - same FFmpeg logic as Electron desktop
-    // WebCodecs/av-cliper had issues with VFR sources causing choppy output
+    // Use ffmpeg.wasm for web - same FFmpeg logic as Electron, handles VFR correctly
     const wasmHook = useFFmpegWasmSplitter()
     return {
       ...wasmHook,
