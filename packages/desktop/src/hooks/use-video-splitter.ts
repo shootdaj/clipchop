@@ -221,17 +221,12 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
 
         console.log(`Device: ${isMobile ? 'mobile' : 'desktop'}, bitrate: ${bitrate}, codec: avc1.${codecProfile}${levelCode}`)
 
-        const combinatorOpts: Record<string, unknown> = {
+        const combinator = new Combinator({
           width: outputWidth,
           height: outputHeight,
           videoCodec: `avc1.${codecProfile}${levelCode}`,
           bitrate,
-        }
-        // On mobile, prefer software encoding - slower but more consistent, no dropped frames
-        if (isMobile) {
-          combinatorOpts.__unsafe_hardwareAcceleration__ = 'prefer-software'
-        }
-        const combinator = new Combinator(combinatorOpts as ConstructorParameters<typeof Combinator>[0])
+        })
 
         const sprite = new OffscreenSprite(segmentClip)
         await sprite.ready
