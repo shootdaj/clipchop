@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { MP4Clip, Combinator, OffscreenSprite } from '@webav/av-cliper'
-import { toMicroseconds, calculateSegmentBoundaries } from '@/lib/video-utils'
+import { toMicroseconds, calculateSegmentBoundaries, getH264LevelCode, getH264ProfileCode, getVideoBitrate } from '@/lib/video-utils'
 
 export interface VideoMetadata {
   duration: number // seconds
@@ -186,37 +186,11 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
           }
         }
         
-        const totalPixels = outputWidth * outputHeight
-        // Use Baseline profile (42) for maximum mobile compatibility
-        // High profile (64) causes choppy playback on many phones
-        // Level selection based on resolution - Level 3.1 is safe minimum for most videos
-        let levelCode = '1f' // Level 3.1 default
-
-        if (totalPixels > 8912896) {
-          levelCode = '34' // Level 5.2 for 4K+
-        } else if (totalPixels > 5652480) {
-          levelCode = '33' // Level 5.1
-        } else if (totalPixels > 3686400) {
-          levelCode = '32' // Level 5.0
-        } else if (totalPixels > 2073600) {
-          levelCode = '28' // Level 4.0
-        } else {
-          levelCode = '1f' // Level 3.1 (safe for 720p-1080p)
-        }
-
-        let bitrate = 5000000
-
-        if (maxResolution !== null) {
-          if (maxResolution === 1280) {
-            bitrate = 2000000 // 2 Mbps for SD
-          } else if (maxResolution === 1920) {
-            bitrate = 4000000 // 4 Mbps for HD
-          }
-        }
-
-        // Use Baseline profile on mobile for compatibility, High on desktop for compression
+        // Use utility functions for codec configuration
         const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-        const codecProfile = isMobile ? '4200' : '6400'
+        const levelCode = getH264LevelCode(outputWidth, outputHeight)
+        const codecProfile = getH264ProfileCode(isMobile)
+        const bitrate = getVideoBitrate(maxResolution, isMobile)
 
         console.log(`Device: ${isMobile ? 'mobile' : 'desktop'}, bitrate: ${bitrate}, codec: avc1.${codecProfile}${levelCode}`)
 

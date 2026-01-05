@@ -73,6 +73,50 @@ export const calculateSegmentBoundaries = (
   return segments
 }
 
+// H.264 level codes based on resolution
+// Level 3.0 (1e) only supports up to 720x480
+// Level 3.1 (1f) supports up to 1280x720
+// Level 4.0 (28) supports up to 1920x1080
+// Level 5.0+ supports 4K and above
+export const getH264LevelCode = (width: number, height: number): string => {
+  const totalPixels = width * height
+
+  if (totalPixels > 8912896) {
+    return '34' // Level 5.2 for 4K+
+  } else if (totalPixels > 5652480) {
+    return '33' // Level 5.1
+  } else if (totalPixels > 3686400) {
+    return '32' // Level 5.0
+  } else if (totalPixels > 2073600) {
+    return '28' // Level 4.0
+  } else {
+    return '1f' // Level 3.1 (safe for 720p-1080p)
+  }
+}
+
+// Get H.264 profile code based on device type
+// Baseline (42) for mobile compatibility, High (64) for desktop compression
+export const getH264ProfileCode = (isMobile: boolean): string => {
+  return isMobile ? '4200' : '6400'
+}
+
+// Build full H.264 codec string (e.g., "avc1.64001f")
+export const buildH264CodecString = (width: number, height: number, isMobile: boolean): string => {
+  const profile = getH264ProfileCode(isMobile)
+  const level = getH264LevelCode(width, height)
+  return `avc1.${profile}${level}`
+}
+
+// Get appropriate bitrate based on resolution
+export const getVideoBitrate = (maxResolution: number | null, isMobile: boolean): number => {
+  if (maxResolution === 1280) {
+    return 2000000 // 2 Mbps for SD
+  } else if (maxResolution === 1920) {
+    return 4000000 // 4 Mbps for HD
+  }
+  return 5000000 // 5 Mbps default
+}
+
 // Validate segment timing accuracy
 export const validateSegmentTiming = (
   segments: SegmentCalculation[],

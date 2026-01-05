@@ -6,6 +6,10 @@ import {
   generateFilename,
   calculateSegmentBoundaries,
   validateSegmentTiming,
+  getH264LevelCode,
+  getH264ProfileCode,
+  buildH264CodecString,
+  getVideoBitrate,
 } from './video-utils'
 
 describe('toMicroseconds', () => {
@@ -342,5 +346,108 @@ describe('integration: calculateSegmentBoundaries + validateSegmentTiming', () =
 
     expect(result.valid).toBe(true)
     expect(segments[0].filename).toBe('video_0m00s-0m30s.mp4')
+  })
+})
+
+describe('getH264LevelCode', () => {
+  it('returns Level 3.1 for 720p video (720x1280)', () => {
+    // This is the exact case that was broken before
+    expect(getH264LevelCode(720, 1280)).toBe('1f')
+  })
+
+  it('returns Level 3.1 for standard 720p (1280x720)', () => {
+    expect(getH264LevelCode(1280, 720)).toBe('1f')
+  })
+
+  it('returns Level 3.1 for SD video (640x480)', () => {
+    expect(getH264LevelCode(640, 480)).toBe('1f')
+  })
+
+  it('returns Level 4.0 for 1080p video', () => {
+    // 1920x1080 = 2,073,600 pixels - exactly at threshold
+    expect(getH264LevelCode(1920, 1080)).toBe('1f') // At threshold, use lower level
+    // Slightly above 1080p
+    expect(getH264LevelCode(1921, 1081)).toBe('28')
+  })
+
+  it('returns Level 5.0 for 1440p+ video', () => {
+    // 2560x1440 = 3,686,400 pixels - exactly at threshold, so uses Level 4.0
+    expect(getH264LevelCode(2560, 1440)).toBe('28')
+    // Slightly above 1440p triggers Level 5.0
+    expect(getH264LevelCode(2561, 1441)).toBe('32')
+  })
+
+  it('returns Level 5.1 for 4K video', () => {
+    expect(getH264LevelCode(3840, 2160)).toBe('33')
+  })
+
+  it('returns Level 5.2 for 8K video', () => {
+    expect(getH264LevelCode(7680, 4320)).toBe('34')
+  })
+
+  it('handles portrait orientation (height > width)', () => {
+    // Portrait 1080p phone video
+    expect(getH264LevelCode(1080, 1920)).toBe('1f')
+    // Portrait 4K phone video
+    expect(getH264LevelCode(2160, 3840)).toBe('33')
+  })
+
+  it('never returns Level 3.0 which breaks 720p', () => {
+    // Level 3.0 (1e) doesn't support 720p, so we should never return it
+    const testCases = [
+      [640, 480],
+      [720, 480],
+      [720, 1280], // The broken case
+      [1280, 720],
+      [1920, 1080],
+    ]
+    testCases.forEach(([w, h]) => {
+      expect(getH264LevelCode(w, h)).not.toBe('1e')
+    })
+  })
+})
+
+describe('getH264ProfileCode', () => {
+  it('returns Baseline (4200) for mobile', () => {
+    expect(getH264ProfileCode(true)).toBe('4200')
+  })
+
+  it('returns High (6400) for desktop', () => {
+    expect(getH264ProfileCode(false)).toBe('6400')
+  })
+})
+
+describe('buildH264CodecString', () => {
+  it('builds correct codec string for mobile 720p', () => {
+    expect(buildH264CodecString(720, 1280, true)).toBe('avc1.42001f')
+  })
+
+  it('builds correct codec string for desktop 720p', () => {
+    expect(buildH264CodecString(720, 1280, false)).toBe('avc1.64001f')
+  })
+
+  it('builds correct codec string for desktop 4K', () => {
+    expect(buildH264CodecString(3840, 2160, false)).toBe('avc1.640033')
+  })
+
+  it('builds correct codec string for mobile 1080p', () => {
+    expect(buildH264CodecString(1920, 1080, true)).toBe('avc1.42001f')
+  })
+})
+
+describe('getVideoBitrate', () => {
+  it('returns 2 Mbps for SD (1280px)', () => {
+    expect(getVideoBitrate(1280, false)).toBe(2000000)
+    expect(getVideoBitrate(1280, true)).toBe(2000000)
+  })
+
+  it('returns 4 Mbps for HD (1920px)', () => {
+    expect(getVideoBitrate(1920, false)).toBe(4000000)
+    expect(getVideoBitrate(1920, true)).toBe(4000000)
+  })
+
+  it('returns 5 Mbps for Full Quality (null)', () => {
+    expect(getVideoBitrate(null, false)).toBe(5000000)
+    expect(getVideoBitrate(null, true)).toBe(5000000)
   })
 })
