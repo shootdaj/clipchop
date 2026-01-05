@@ -187,34 +187,42 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
         }
         
         const totalPixels = outputWidth * outputHeight
-        let levelCode = '28'
-        
+        // Use Baseline profile (42) for maximum mobile compatibility
+        // High profile (64) causes choppy playback on many phones
+        let levelCode = '1f' // Level 3.1 default
+
         if (totalPixels > 8912896) {
-          levelCode = '34'
+          levelCode = '34' // Level 5.2 for 4K+
         } else if (totalPixels > 5652480) {
-          levelCode = '33'
+          levelCode = '33' // Level 5.1
         } else if (totalPixels > 3686400) {
-          levelCode = '32'
+          levelCode = '32' // Level 5.0
         } else if (totalPixels > 2073600) {
-          levelCode = '2a'
+          levelCode = '28' // Level 4.0
+        } else if (totalPixels > 921600) {
+          levelCode = '1f' // Level 3.1
+        } else {
+          levelCode = '1e' // Level 3.0 for smaller videos
         }
 
         let bitrate = 5000000
-        
+
         if (maxResolution !== null) {
           if (maxResolution === 1280) {
-            bitrate = 800000
+            bitrate = 2000000 // 2 Mbps for SD - was too low at 800k
           } else if (maxResolution === 1920) {
-            bitrate = 1500000
+            bitrate = 4000000 // 4 Mbps for HD
           }
         }
 
-        console.log(`Combinator config: ${outputWidth}x${outputHeight}, bitrate: ${bitrate}, codec: avc1.6400${levelCode}`)
+        // Use Baseline profile (42) instead of High profile (64) for mobile compatibility
+        const codecProfile = '4200' // Baseline profile - works on all phones
+        console.log(`Combinator config: ${outputWidth}x${outputHeight}, bitrate: ${bitrate}, codec: avc1.${codecProfile}${levelCode}`)
 
         const combinator = new Combinator({
           width: outputWidth,
           height: outputHeight,
-          videoCodec: `avc1.6400${levelCode}`,
+          videoCodec: `avc1.${codecProfile}${levelCode}`,
           bitrate,
         })
 
