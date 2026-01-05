@@ -1,3 +1,10 @@
+## [1.2.6](https://github.com/shootdaj/clipchop/compare/v1.2.5...v1.2.6) (2026-01-05)
+
+
+### Bug Fixes
+
+* Pin electron version for CI build ([f43b8a2](https://github.com/shootdaj/clipchop/commit/f43b8a2cd0e5e2294d701fbc7e75e2320e3b7877))
+
 ## [1.2.5](https://github.com/shootdaj/clipchop/compare/v1.2.4...v1.2.5) (2026-01-05)
 
 
