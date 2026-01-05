@@ -221,6 +221,11 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
         const sprite = new OffscreenSprite(segmentClip)
         await sprite.ready
         sprite.time = { offset: 0, duration: toMicroseconds(segment.duration) }
+        // Set rect to scale video to fill the output canvas
+        sprite.rect.x = 0
+        sprite.rect.y = 0
+        sprite.rect.w = outputWidth
+        sprite.rect.h = outputHeight
         await combinator.addSprite(sprite, { main: true })
         
         console.log(`Starting to encode segment ${i + 1}/${calculatedSegments.length}`)
