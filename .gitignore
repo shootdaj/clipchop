@@ -10,3 +10,8 @@ packages/mobile/bun.lock
 packages/mobile/package-lock.json
 .vercel
 .env*.local
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
