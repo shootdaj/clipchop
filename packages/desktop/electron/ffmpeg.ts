@@ -1,10 +1,43 @@
 import ffmpeg from 'fluent-ffmpeg'
 import path from 'path'
-import ffmpegInstaller from '@ffmpeg-installer/ffmpeg'
-import ffprobeInstaller from '@ffprobe-installer/ffprobe'
+import fs from 'fs'
+import os from 'os'
 
-ffmpeg.setFfmpegPath(ffmpegInstaller.path)
-ffmpeg.setFfprobePath(ffprobeInstaller.path)
+// Get platform-specific binary paths
+const platform = os.platform() + '-' + os.arch()
+const ffmpegBinary = os.platform() === 'win32' ? 'ffmpeg.exe' : 'ffmpeg'
+const ffprobeBinary = os.platform() === 'win32' ? 'ffprobe.exe' : 'ffprobe'
+
+// Possible locations for ffmpeg binaries
+function findBinary(binaryType: 'ffmpeg' | 'ffprobe'): string {
+  const installer = binaryType === 'ffmpeg' ? '@ffmpeg-installer' : '@ffprobe-installer'
+  const binary = binaryType === 'ffmpeg' ? ffmpegBinary : ffprobeBinary
+
+  const locations = [
+    // Packaged app: Resources/node_modules/@ffmpeg-installer/darwin-arm64/ffmpeg
+    path.join(process.resourcesPath || '', 'node_modules', installer, platform, binary),
+    // Development: node_modules/@ffmpeg-installer/darwin-arm64/ffmpeg (copied from bun cache)
+    path.join(__dirname, '..', 'node_modules', installer, platform, binary),
+    // Root node_modules (monorepo)
+    path.join(__dirname, '..', '..', '..', 'node_modules', installer, platform, binary),
+  ]
+
+  for (const loc of locations) {
+    if (fs.existsSync(loc)) {
+      console.log(`Found ${binaryType} at:`, loc)
+      return loc
+    }
+  }
+
+  console.error(`Could not find ${binaryType} in any of:`, locations)
+  throw new Error(`${binaryType} binary not found`)
+}
+
+const ffmpegPath = findBinary('ffmpeg')
+const ffprobePath = findBinary('ffprobe')
+
+ffmpeg.setFfmpegPath(ffmpegPath)
+ffmpeg.setFfprobePath(ffprobePath)
 
 export interface VideoInfo {
   duration: number

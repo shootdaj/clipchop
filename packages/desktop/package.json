@@ -17,10 +17,10 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "electron:dev": "concurrently \"cross-env BROWSER=none vite\" \"wait-on http://localhost:5173 && electron .\"",
-    "electron:build": "tsc -p tsconfig.electron.json && node -e \"require('fs').writeFileSync('dist-electron/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\" && tsc -b && vite build && electron-builder",
-    "electron:build:mac": "bun run electron:build -- --mac",
-    "electron:build:win": "bun run electron:build -- --win",
-    "electron:build:linux": "bun run electron:build -- --linux"
+    "electron:build": "node scripts/build-electron.mjs && tsc -b && vite build && electron-builder",
+    "electron:build:mac": "npm run electron:build -- --mac",
+    "electron:build:win": "npm run electron:build -- --win",
+    "electron:build:linux": "npm run electron:build -- --linux"
   },
   "dependencies": {
     "@electron/remote": "^2.1.3",
@@ -54,6 +54,7 @@
     "cross-env": "^10.1.0",
     "electron": "^39.2.7",
     "electron-builder": "^26.0.12",
+    "esbuild": "^0.27.2",
     "typescript": "~5.6.2",
     "vite": "^6.0.5",
     "vite-plugin-pwa": "^1.2.0",
@@ -67,13 +68,19 @@
     },
     "files": [
       "dist/**/*",
-      "dist-electron/**/*",
-      "node_modules/**/*",
-      "!node_modules/.cache/**/*"
+      "dist-electron/**/*"
     ],
-    "asarUnpack": [
-      "node_modules/@ffmpeg-installer/**/*",
-      "node_modules/@ffprobe-installer/**/*"
+    "extraResources": [
+      {
+        "from": "node_modules/@ffmpeg-installer",
+        "to": "node_modules/@ffmpeg-installer",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "node_modules/@ffprobe-installer",
+        "to": "node_modules/@ffprobe-installer",
+        "filter": ["**/*"]
+      }
     ],
     "publish": {
       "provider": "github",
