@@ -215,14 +215,39 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
           }
         }
 
-        // Detect mobile devices and use appropriate H.264 profile
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-          || (navigator.maxTouchPoints > 0 && window.innerWidth < 1024)
+        // Test actual device codec capability using WebCodecs API
+        // Try profiles in order: High (best compression) → Main → Baseline (most compatible)
+        const profiles = [
+          { code: '6400', name: 'High' },
+          { code: '4d00', name: 'Main' },
+          { code: '4200', name: 'Baseline' },
+        ]
 
-        // Mobile: Baseline profile (42) for compatibility
-        // Desktop: High profile (64) for better compression
-        const codecProfile = isMobile ? '4200' : '6400'
-        console.log(`Device: ${isMobile ? 'mobile' : 'desktop'}, profile: ${isMobile ? 'Baseline' : 'High'}`)
+        let codecProfile = '4200' // Default to Baseline
+        let profileName = 'Baseline'
+
+        for (const profile of profiles) {
+          const testCodec = `avc1.${profile.code}${levelCode}`
+          try {
+            const support = await VideoEncoder.isConfigSupported({
+              codec: testCodec,
+              width: outputWidth,
+              height: outputHeight,
+              bitrate,
+              framerate: 30,
+            })
+            if (support.supported) {
+              codecProfile = profile.code
+              profileName = profile.name
+              console.log(`Device supports ${profile.name} profile (${testCodec})`)
+              break
+            }
+          } catch {
+            // Profile not supported, try next
+          }
+        }
+
+        console.log(`Using ${profileName} profile for encoding`)
         console.log(`Combinator config: ${outputWidth}x${outputHeight}, bitrate: ${bitrate}, codec: avc1.${codecProfile}${levelCode}`)
 
         const combinator = new Combinator({
