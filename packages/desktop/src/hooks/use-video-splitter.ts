@@ -176,19 +176,13 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
         let outputWidth = metadata.width
         let outputHeight = metadata.height
 
-        // On mobile, force max 720p to prevent encoder from choking
-        const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-        const effectiveMaxResolution = isMobileDevice
-          ? Math.min(maxResolution ?? 720, 720) // Force 720p max on mobile
-          : maxResolution
-
-        if (effectiveMaxResolution !== null) {
+        if (maxResolution !== null) {
           const maxDimension = Math.max(metadata.width, metadata.height)
-          if (maxDimension > effectiveMaxResolution) {
-            const scale = effectiveMaxResolution / maxDimension
+          if (maxDimension > maxResolution) {
+            const scale = maxResolution / maxDimension
             outputWidth = Math.round(metadata.width * scale / 2) * 2
             outputHeight = Math.round(metadata.height * scale / 2) * 2
-            console.log(`Downscaling from ${metadata.width}x${metadata.height} to ${outputWidth}x${outputHeight}${isMobileDevice ? ' (mobile limit)' : ''}`)
+            console.log(`Downscaling from ${metadata.width}x${metadata.height} to ${outputWidth}x${outputHeight}`)
           }
         }
         
@@ -221,25 +215,20 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
           }
         }
 
-        // Mobile devices struggle with encoding - use lower fps and Baseline profile
+        // Use Baseline profile on mobile for compatibility, High on desktop for compression
         const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-        const codecProfile = isMobile ? '4200' : '6400' // Baseline vs High
-        const fps = isMobile ? 24 : 30 // Lower fps on mobile to reduce encoder load
+        const codecProfile = isMobile ? '4200' : '6400'
 
-        // On mobile, also reduce bitrate to help encoder keep up
-        if (isMobile) {
-          bitrate = Math.min(bitrate, 2000000) // Cap at 2 Mbps on mobile
-        }
-
-        console.log(`Device: ${isMobile ? 'mobile' : 'desktop'}, fps: ${fps}, bitrate: ${bitrate}, codec: avc1.${codecProfile}${levelCode}`)
+        console.log(`Device: ${isMobile ? 'mobile' : 'desktop'}, bitrate: ${bitrate}, codec: avc1.${codecProfile}${levelCode}`)
 
         const combinator = new Combinator({
           width: outputWidth,
           height: outputHeight,
           videoCodec: `avc1.${codecProfile}${levelCode}`,
           bitrate,
-          fps,
-        })
+          // On mobile, prefer software encoding - slower but more consistent, no dropped frames
+          __unsafe_hardwareAcceleration__: isMobile ? 'prefer-software' : 'prefer-hardware',
+        } as Parameters<typeof Combinator>[0])
 
         const sprite = new OffscreenSprite(segmentClip)
         await sprite.ready
@@ -265,19 +254,37 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
 
         console.log('Starting to read output stream...')
         
+        // Adaptive throttling - only slow down if device is struggling
+        let lastChunkTime = performance.now()
+        let slowChunkCount = 0
+        const SLOW_THRESHOLD = 100 // If chunk takes >100ms, device is struggling
+
         while (true) {
           const { done, value } = await reader.read()
           if (done) {
-            console.log(`Segment ${i + 1} complete: ${chunkCount} chunks, ${totalBytes} bytes`)
+            console.log(`Segment ${i + 1} complete: ${chunkCount} chunks, ${totalBytes} bytes, slow chunks: ${slowChunkCount}`)
             break
           }
           if (value) {
+            const now = performance.now()
+            const chunkTime = now - lastChunkTime
+            lastChunkTime = now
+
             chunks.push(value)
             chunkCount++
             totalBytes += value.length
-            
+
+            // Adaptive throttling: if chunks are taking too long, the encoder is struggling
+            // Give it a breather to catch up
+            if (chunkTime > SLOW_THRESHOLD) {
+              slowChunkCount++
+              // Proportional delay based on how slow we are
+              const delay = Math.min(chunkTime * 0.5, 50) // Max 50ms delay
+              await new Promise(resolve => setTimeout(resolve, delay))
+            }
+
             if (chunkCount === 1 || chunkCount % 50 === 0) {
-              console.log(`Segment ${i + 1}: ${chunkCount} chunks, ${totalBytes} bytes`)
+              console.log(`Segment ${i + 1}: ${chunkCount} chunks, ${totalBytes} bytes, avg chunk time: ${chunkTime.toFixed(1)}ms`)
               const segmentProgress = (i / calculatedSegments.length) * 100
               const estimatedChunkProgress = Math.min(segmentProgress + 5, ((i + 1) / calculatedSegments.length) * 100)
               setProgress(p => ({
