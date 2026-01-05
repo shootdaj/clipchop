@@ -110,9 +110,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Deploy to Vercel runs in PARALLEL with release job for speed
-  # Gets version from git tags directly (no need to wait for semantic-release)
+  # Deploy to Vercel - must wait for release job to get correct version
   deploy-vercel:
+    needs: release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -140,19 +140,11 @@ jobs:
         run: npm install --legacy-peer-deps
         working-directory: packages/desktop
 
-      - name: Determine version from git tags
-        id: version
-        run: |
-          # Get version directly from git tags (no need to wait for release job)
-          VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "1.0.0")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Deploying version: $VERSION"
-
       - name: Build for production
         run: npm run build
         working-directory: packages/desktop
         env:
-          APP_VERSION: ${{ steps.version.outputs.version }}
+          APP_VERSION: ${{ needs.release.outputs.new_release_version }}
 
       - name: Deploy to Vercel
         run: |
