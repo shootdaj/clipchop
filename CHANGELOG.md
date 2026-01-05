@@ -1,3 +1,10 @@
+## [1.2.4](https://github.com/shootdaj/clipchop/compare/v1.2.3...v1.2.4) (2026-01-05)
+
+
+### Bug Fixes
+
+* Bundle ffmpeg binaries correctly with Electron using esbuild ([277f0a2](https://github.com/shootdaj/clipchop/commit/277f0a2f4b7e53c10bdcfc91dd7e1760ae3fa028))
+
 ## [1.2.3](https://github.com/shootdaj/clipchop/compare/v1.2.2...v1.2.3) (2026-01-05)
 
 
