@@ -175,14 +175,20 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
         // Export segment to blob
         let outputWidth = metadata.width
         let outputHeight = metadata.height
-        
-        if (maxResolution !== null) {
+
+        // On mobile, force max 720p to prevent encoder from choking
+        const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+        const effectiveMaxResolution = isMobileDevice
+          ? Math.min(maxResolution ?? 720, 720) // Force 720p max on mobile
+          : maxResolution
+
+        if (effectiveMaxResolution !== null) {
           const maxDimension = Math.max(metadata.width, metadata.height)
-          if (maxDimension > maxResolution) {
-            const scale = maxResolution / maxDimension
+          if (maxDimension > effectiveMaxResolution) {
+            const scale = effectiveMaxResolution / maxDimension
             outputWidth = Math.round(metadata.width * scale / 2) * 2
             outputHeight = Math.round(metadata.height * scale / 2) * 2
-            console.log(`Downscaling from ${metadata.width}x${metadata.height} to ${outputWidth}x${outputHeight}`)
+            console.log(`Downscaling from ${metadata.width}x${metadata.height} to ${outputWidth}x${outputHeight}${isMobileDevice ? ' (mobile limit)' : ''}`)
           }
         }
         
@@ -215,16 +221,24 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
           }
         }
 
-        // Mobile devices struggle to decode High profile - use Baseline for smooth playback
+        // Mobile devices struggle with encoding - use lower fps and Baseline profile
         const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
         const codecProfile = isMobile ? '4200' : '6400' // Baseline vs High
-        console.log(`Device: ${isMobile ? 'mobile (Baseline)' : 'desktop (High)'}, codec: avc1.${codecProfile}${levelCode}`)
+        const fps = isMobile ? 24 : 30 // Lower fps on mobile to reduce encoder load
+
+        // On mobile, also reduce bitrate to help encoder keep up
+        if (isMobile) {
+          bitrate = Math.min(bitrate, 2000000) // Cap at 2 Mbps on mobile
+        }
+
+        console.log(`Device: ${isMobile ? 'mobile' : 'desktop'}, fps: ${fps}, bitrate: ${bitrate}, codec: avc1.${codecProfile}${levelCode}`)
 
         const combinator = new Combinator({
           width: outputWidth,
           height: outputHeight,
           videoCodec: `avc1.${codecProfile}${levelCode}`,
           bitrate,
+          fps,
         })
 
         const sprite = new OffscreenSprite(segmentClip)
