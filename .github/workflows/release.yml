@@ -76,6 +76,14 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: packages/desktop/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('packages/desktop/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Install dependencies
         run: npm install --legacy-peer-deps
         working-directory: packages/desktop
@@ -102,10 +110,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # Deploy to Vercel runs in PARALLEL with release job for speed
+  # Gets version from git tags directly (no need to wait for semantic-release)
   deploy-vercel:
-    needs: release
     runs-on: ubuntu-latest
-    # Always deploy to Vercel on push to master, even without new release
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -117,6 +125,14 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: packages/desktop/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('packages/desktop/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Install Vercel CLI
         run: npm install -g vercel
 
@@ -124,16 +140,13 @@ jobs:
         run: npm install --legacy-peer-deps
         working-directory: packages/desktop
 
-      - name: Determine version
+      - name: Determine version from git tags
         id: version
         run: |
-          if [ "${{ needs.release.outputs.new_release_published }}" == "true" ]; then
-            echo "version=${{ needs.release.outputs.new_release_version }}" >> $GITHUB_OUTPUT
-          else
-            # Use latest git tag
-            VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "1.0.0")
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-          fi
+          # Get version directly from git tags (no need to wait for release job)
+          VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "1.0.0")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Deploying version: $VERSION"
 
       - name: Build for production
         run: npm run build
