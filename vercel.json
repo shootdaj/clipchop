@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm install --prefix packages/desktop --legacy-peer-deps && cd packages/desktop && npm run build",
+  "buildCommand": "git fetch --tags --unshallow 2>/dev/null || git fetch --tags || true && npm install --prefix packages/desktop --legacy-peer-deps && cd packages/desktop && npm run build",
   "outputDirectory": "packages/desktop/dist",
   "installCommand": "echo 'Skipping root install'",
   "framework": null,
