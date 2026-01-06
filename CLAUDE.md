@@ -58,13 +58,26 @@ To deploy: Just `git push origin master`
 
 ## PRE-COMMIT TESTING REQUIREMENT
 
-**ALWAYS run tests before committing:**
+**ALWAYS run and test locally before claiming to be finished:**
 
+1. **Run automated tests:**
 ```bash
 cd packages/desktop
 bun run test           # Unit tests (must pass)
 bun run test:e2e:smoke # Smoke tests (must pass)
 ```
+
+2. **Manual verification:**
+- Use Chrome DevTools to debug web version
+- Use Android emulator/connected device for Flutter app
+- Test actual video splitting with real files
+- Verify UI animations and interactions work correctly
+
+3. **Build verification:**
+- Build locally before pushing to CI/CD
+- Test the built artifacts (APK, Electron app) on actual devices when possible
+
+**NEVER claim something is "done" or "fixed" without actual verification.**
 
 ---
 
