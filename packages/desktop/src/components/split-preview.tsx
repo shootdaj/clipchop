@@ -1,4 +1,4 @@
-import { motion } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
 import { cn } from '@/lib/utils'
 import type { SplitSegment } from '@/hooks/use-video-splitter'
 
@@ -54,42 +54,45 @@ export function SplitPreview({ segments, totalDuration }: SplitPreviewProps) {
       {/* Visual timeline with 3D inset */}
       <div className="relative h-12 card-3d-inset rounded-xl overflow-hidden">
         <div className="absolute inset-0 flex">
-          {segments.map((segment, index) => {
-            const widthPercent = (segment.duration / totalDuration) * 100
-            // Purple-based gradient colors
-            const colors = [
-              'from-violet-500/90 to-violet-600/90',
-              'from-purple-500/90 to-purple-600/90',
-              'from-fuchsia-500/90 to-fuchsia-600/90',
-              'from-pink-500/90 to-pink-600/90',
-              'from-indigo-500/90 to-indigo-600/90',
-              'from-amber-500/90 to-amber-600/90',
-            ]
+          <AnimatePresence mode="popLayout">
+            {segments.map((segment, index) => {
+              const widthPercent = (segment.duration / totalDuration) * 100
+              // Purple-based gradient colors
+              const colors = [
+                'from-violet-500/90 to-violet-600/90',
+                'from-purple-500/90 to-purple-600/90',
+                'from-fuchsia-500/90 to-fuchsia-600/90',
+                'from-pink-500/90 to-pink-600/90',
+                'from-indigo-500/90 to-indigo-600/90',
+                'from-amber-500/90 to-amber-600/90',
+              ]
 
-            return (
-              <motion.div
-                key={segment.index}
-                initial={false}
-                animate={{ width: `${widthPercent}%` }}
-                transition={linearTransition}
-                className={cn(
-                  'segment-bar',
-                  'h-full border-r border-background/30 last:border-r-0',
-                  'flex items-center justify-center',
-                  'bg-gradient-to-b',
-                  colors[index % colors.length],
-                  'cursor-pointer',
-                  'overflow-hidden'
-                )}
-              >
-                {widthPercent > 6 && (
-                  <span className="text-sm font-bold text-white/90 drop-shadow-md">
-                    {index + 1}
-                  </span>
-                )}
-              </motion.div>
-            )
-          })}
+              return (
+                <motion.div
+                  key={segment.index}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${widthPercent}%` }}
+                  exit={{ width: 0 }}
+                  transition={linearTransition}
+                  className={cn(
+                    'segment-bar',
+                    'h-full border-r border-background/30 last:border-r-0',
+                    'flex items-center justify-center',
+                    'bg-gradient-to-b',
+                    colors[index % colors.length],
+                    'cursor-pointer',
+                    'overflow-hidden'
+                  )}
+                >
+                  {widthPercent > 6 && (
+                    <span className="text-sm font-bold text-white/90 drop-shadow-md">
+                      {index + 1}
+                    </span>
+                  )}
+                </motion.div>
+              )
+            })}
+          </AnimatePresence>
         </div>
       </div>
 
