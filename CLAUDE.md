@@ -38,6 +38,10 @@ cd packages/desktop && bun run electron:dev
 3. **Update this file** - Add any major changes to Architecture or Current Status sections
 4. **Update `PROGRESS.md`** - Log what you completed
 5. **Use TodoWrite** - Track in-session progress
+6. **Keep ALL platforms in sync** - When adding features or fixes, apply them to ALL app versions:
+   - Desktop/Web (packages/desktop/src/App.tsx)
+   - Flutter mobile (packages/clipchop_flutter)
+   - Any future platforms
 
 ## DEPLOYMENT IS AUTOMATIC
 
@@ -93,6 +97,14 @@ bun run test:e2e:smoke # Smoke tests (must pass)
 - E2E tests (Playwright)
 - Smoke tests for quick iteration (~7s)
 
+**Flutter Android App (NEW - Session 10)**:
+- Native Flutter app at `packages/clipchop_flutter`
+- Uses `ffmpeg_kit_flutter_new` (community fork, actively maintained)
+- Full native FFmpeg with GPU acceleration
+- Matches web app UI (dark purple/amber theme, 3D cards)
+- APK: `~/Downloads/clipchop-flutter.apk` (214MB)
+- To build: `cd packages/clipchop_flutter && flutter build apk --release`
+
 ### Known Limitations
 
 - **Web on Mobile**: Slow encoding (WebAssembly limitation)
@@ -108,6 +120,7 @@ bun run test:e2e:smoke # Smoke tests (must pass)
 | Platform | Technology | Speed | VFR Handling |
 |----------|-----------|-------|--------------|
 | **Desktop (Electron)** | Native FFmpeg | 1-2 min | Excellent |
+| **Flutter Android** | Native FFmpeg | 1-2 min | Excellent |
 | **Web (Desktop Browser)** | WebCodecs | 5-15 min | Good |
 | **Web (Mobile Browser)** | FFmpeg.wasm | 15-30 min | Excellent |
 
@@ -115,7 +128,7 @@ bun run test:e2e:smoke # Smoke tests (must pass)
 
 ```
 clipchop/
-├── packages/desktop/
+├── packages/desktop/              # Electron + Web app
 │   ├── src/hooks/
 │   │   ├── use-video-splitter-hybrid.ts    # Auto-detects platform
 │   │   ├── use-video-splitter-electron.ts  # Native FFmpeg
@@ -125,6 +138,11 @@ clipchop/
 │   │   ├── ffmpeg.ts                       # FFmpeg wrapper
 │   │   └── ipc-handlers.ts                 # Electron IPC
 │   └── src/App.tsx                         # Main UI
+├── packages/clipchop_flutter/     # Flutter Android app (NEW)
+│   ├── lib/services/ffmpeg_service.dart    # FFmpeg processing
+│   ├── lib/services/video_state.dart       # State management
+│   ├── lib/screens/home_screen.dart        # Main screen
+│   └── lib/widgets/                        # UI components
 └── .github/workflows/
     └── release.yml                         # CI/CD (Electron + Vercel)
 ```
@@ -155,6 +173,10 @@ cd packages/desktop && bun run dev
 
 # Electron version
 cd packages/desktop && bun run electron:dev
+
+# Flutter Android (requires Android SDK)
+cd packages/clipchop_flutter && flutter build apk --release
+# APK at: build/app/outputs/flutter-apk/app-release.apk
 ```
 
 ### Building

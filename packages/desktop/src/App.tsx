@@ -39,6 +39,7 @@ function App() {
   const [maxResolution, setMaxResolution] = useState<number | null>(null)
   const [startTime, setStartTime] = useState<number | null>(null)
   const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState<string>('')
+  const [elapsedTime, setElapsedTime] = useState<string>('')
 
   const {
     metadata,
@@ -60,7 +61,20 @@ function App() {
   useEffect(() => {
     if (progress.status === 'splitting' && !startTime) {
       setStartTime(Date.now())
-    } else if (progress.status !== 'splitting') {
+      setElapsedTime('')
+    } else if (progress.status === 'complete' && startTime) {
+      // Calculate and store final elapsed time
+      const elapsed = (Date.now() - startTime) / 1000
+      if (elapsed >= 60) {
+        const mins = Math.floor(elapsed / 60)
+        const secs = Math.floor(elapsed % 60)
+        setElapsedTime(`${mins}m ${secs}s`)
+      } else {
+        setElapsedTime(`${Math.floor(elapsed)}s`)
+      }
+      setStartTime(null)
+      setEstimatedTimeRemaining('')
+    } else if (progress.status !== 'splitting' && progress.status !== 'complete') {
       setStartTime(null)
       setEstimatedTimeRemaining('')
     }
@@ -105,6 +119,7 @@ function App() {
     setSelectedDuration(null)
     setStartTime(null)
     setEstimatedTimeRemaining('')
+    setElapsedTime('')
   }
 
   const isSplitting = progress.status === 'splitting'
@@ -388,6 +403,28 @@ function App() {
                     transition={fluidSpring}
                     className="space-y-5"
                   >
+                    {/* Success message with elapsed time */}
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={fluidSpring}
+                      className="card-3d p-5 border-green-500/30 bg-green-500/5"
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="flex items-center gap-3">
+                          <span className="text-green-500 text-xl">✓</span>
+                          <span className="text-green-500 font-semibold">
+                            Successfully created {segments.length} clips!
+                          </span>
+                        </div>
+                        {elapsedTime && (
+                          <span className="text-green-500/70 text-sm">
+                            Completed in {elapsedTime}
+                          </span>
+                        )}
+                      </div>
+                    </motion.div>
+
                     {/* Video preview grid with download buttons */}
                     <VideoPreviewGrid
                       segments={segments}
