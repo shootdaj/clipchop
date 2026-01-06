@@ -184,7 +184,7 @@ function App() {
                       transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
                       className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full"
                     />
-                    <span className="text-muted-foreground">Analyzing video...</span>
+                    <span className="text-muted-foreground">{progress.loadingMessage || 'Analyzing video...'}</span>
                   </motion.div>
                 )}
               </motion.div>

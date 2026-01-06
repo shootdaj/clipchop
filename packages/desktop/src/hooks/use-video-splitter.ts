@@ -27,6 +27,7 @@ export interface SplitProgress {
   percent: number
   status: 'idle' | 'loading' | 'splitting' | 'complete' | 'error'
   error?: string
+  loadingMessage?: string
 }
 
 interface UseVideoSplitterReturn {

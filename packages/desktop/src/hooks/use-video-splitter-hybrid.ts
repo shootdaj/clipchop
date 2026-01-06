@@ -1,6 +1,6 @@
 import { useVideoSplitter as useElectronSplitter } from './use-video-splitter-electron'
 import { useVideoSplitter as useWebCodecsSplitter } from './use-video-splitter'
-import { useVideoSplitter as useMediaRecorderSplitter } from './use-video-splitter-mediarecorder'
+import { useVideoSplitter as useFFmpegWasmSplitter } from './use-video-splitter-ffmpeg-wasm'
 
 // Detect mobile/tablet devices
 const isMobileDevice = () => {
@@ -24,21 +24,20 @@ export function useVideoSplitter() {
       }
     }
   } else if (isMobile) {
-    // Mobile: Use MediaRecorder API - handles VFR videos better than WebCodecs
-    // Records in real-time but produces smooth output
-    console.log('Using MediaRecorder for mobile device')
-    const mediaRecorderHook = useMediaRecorderSplitter()
+    // Mobile: Use ffmpeg.wasm - same FFmpeg engine as desktop, handles VFR properly
+    console.log('Using ffmpeg.wasm for mobile device')
+    const ffmpegHook = useFFmpegWasmSplitter()
     return {
-      ...mediaRecorderHook,
+      ...ffmpegHook,
       loadVideo: async (fileOrPath?: File | string) => {
         if (fileOrPath instanceof File) {
-          return mediaRecorderHook.loadVideo(fileOrPath)
+          return ffmpegHook.loadVideo(fileOrPath)
         }
         throw new Error('File required for web mode')
       }
     }
   } else {
-    // Desktop: Use WebCodecs (fast, works well on desktop hardware)
+    // Desktop browser: Use WebCodecs (fast, works well on desktop hardware)
     console.log('Using WebCodecs for desktop browser')
     const webCodecsHook = useWebCodecsSplitter()
     return {
