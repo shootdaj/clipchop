@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion, AnimatePresence, LayoutGroup } from 'motion/react'
 import { cn } from '@/lib/utils'
 
 interface DurationSelectorProps {
@@ -24,6 +24,14 @@ const bouncySpring = {
   stiffness: 300,
   damping: 22,
   mass: 0.6,
+}
+
+// Smooth spring for the shared layout indicator
+const indicatorSpring = {
+  type: 'spring' as const,
+  stiffness: 400,
+  damping: 30,
+  mass: 0.8,
 }
 
 const formatDuration = (seconds: number): string => {
@@ -80,83 +88,91 @@ export function DurationSelector({
         </AnimatePresence>
       </div>
 
-      {/* Preset buttons with 3D pill effect */}
-      <div className="flex flex-wrap gap-3">
-        {allPresets.map((preset, index) => {
-          const isSelected = value === preset
-          return (
-            <motion.button
-              key={preset}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ ...bouncySpring, delay: Math.min(index * 0.03, 0.12) }}
-              whileHover={{
-                scale: disabled ? 1 : 1.05,
-                y: disabled ? 0 : -3
-              }}
-              whileTap={{
-                scale: disabled ? 1 : 0.95,
-                y: disabled ? 0 : 2
-              }}
-              onClick={() => {
-                onChange(preset)
-                setShowCustomInput(false)
-              }}
-              disabled={disabled}
-              className={cn(
-                'relative px-6 py-3 rounded-full text-base font-bold',
-                'transition-all duration-200',
-                'disabled:opacity-40 disabled:cursor-not-allowed',
-                isSelected ? 'pill-3d pill-3d-active text-white' : 'pill-3d text-foreground'
-              )}
-            >
-              {/* Large number display */}
-              <span className="display-number">{formatDuration(preset)}</span>
-
-              {/* Selection indicator dot */}
-              <AnimatePresence>
+      {/* Preset buttons with shared layout animation */}
+      <LayoutGroup>
+        <div className="flex flex-wrap gap-3">
+          {allPresets.map((preset, index) => {
+            const isSelected = value === preset
+            return (
+              <motion.button
+                key={preset}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ ...bouncySpring, delay: Math.min(index * 0.03, 0.12) }}
+                whileHover={{
+                  scale: disabled ? 1 : 1.03,
+                  y: disabled ? 0 : -2
+                }}
+                whileTap={{
+                  scale: disabled ? 1 : 0.97,
+                  y: disabled ? 0 : 1
+                }}
+                onClick={() => {
+                  onChange(preset)
+                  setShowCustomInput(false)
+                }}
+                disabled={disabled}
+                className={cn(
+                  'relative px-6 py-3 rounded-full text-base font-bold',
+                  'transition-colors duration-200',
+                  'disabled:opacity-40 disabled:cursor-not-allowed',
+                  isSelected ? 'text-white' : 'pill-3d text-foreground'
+                )}
+              >
+                {/* Shared layout sliding background indicator */}
                 {isSelected && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    transition={bouncySpring}
-                    className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-accent shadow-[0_0_10px_rgba(245,158,11,0.6)]"
+                  <motion.div
+                    layoutId="duration-indicator"
+                    className="absolute inset-0 rounded-full pill-3d-active"
+                    transition={indicatorSpring}
                   />
                 )}
-              </AnimatePresence>
-            </motion.button>
-          )
-        })}
 
-        {/* Custom button */}
-        <motion.button
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ ...bouncySpring, delay: 0.15 }}
-          whileHover={{
-            scale: disabled ? 1 : 1.05,
-            y: disabled ? 0 : -3
-          }}
-          whileTap={{
-            scale: disabled ? 1 : 0.95,
-            y: disabled ? 0 : 2
-          }}
-          onClick={() => setShowCustomInput(true)}
-          disabled={disabled}
-          className={cn(
-            'relative px-6 py-3 rounded-full text-base font-bold',
-            'transition-all duration-200',
-            'disabled:opacity-40 disabled:cursor-not-allowed',
-            'border-2 border-dashed',
-            isCustomValue || showCustomInput
-              ? 'pill-3d pill-3d-active text-white border-primary/50'
-              : 'pill-3d text-muted-foreground border-border hover:border-primary/30'
-          )}
-        >
-          {isCustomValue ? formatDuration(value!) : 'Custom'}
-        </motion.button>
-      </div>
+                {/* Large number display */}
+                <span className="relative z-10 display-number">{formatDuration(preset)}</span>
+              </motion.button>
+            )
+          })}
+
+          {/* Custom button */}
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...bouncySpring, delay: 0.15 }}
+            whileHover={{
+              scale: disabled ? 1 : 1.03,
+              y: disabled ? 0 : -2
+            }}
+            whileTap={{
+              scale: disabled ? 1 : 0.97,
+              y: disabled ? 0 : 1
+            }}
+            onClick={() => setShowCustomInput(true)}
+            disabled={disabled}
+            className={cn(
+              'relative px-6 py-3 rounded-full text-base font-bold',
+              'transition-colors duration-200',
+              'disabled:opacity-40 disabled:cursor-not-allowed',
+              'border-2 border-dashed',
+              isCustomValue || showCustomInput
+                ? 'text-white border-primary/50'
+                : 'pill-3d text-muted-foreground border-border hover:border-primary/30'
+            )}
+          >
+            {/* Shared layout sliding background for custom */}
+            {(isCustomValue || showCustomInput) && (
+              <motion.div
+                layoutId="duration-indicator"
+                className="absolute inset-0 rounded-full pill-3d-active"
+                transition={indicatorSpring}
+              />
+            )}
+            <span className="relative z-10">
+              {isCustomValue ? formatDuration(value!) : 'Custom'}
+            </span>
+          </motion.button>
+        </div>
+      </LayoutGroup>
 
       {/* Custom input with 3D styling */}
       <AnimatePresence>

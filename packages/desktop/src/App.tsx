@@ -8,6 +8,7 @@ import { DurationSelector } from '@/components/duration-selector'
 import { SplitPreview } from '@/components/split-preview'
 import { BrowserCompatibility } from '@/components/browser-compatibility'
 import { InstallPrompt } from '@/components/install-prompt'
+import { MobileWarning } from '@/components/mobile-warning'
 import { useVideoSplitter } from '@/hooks/use-video-splitter-hybrid'
 import { cn } from '@/lib/utils'
 
@@ -129,6 +130,7 @@ function App() {
   return (
     <>
       <InstallPrompt />
+      <MobileWarning />
       <div className="min-h-screen gradient-bg p-4 md:p-8 relative overflow-hidden">
       {/* Animated floating orbs - using CSS animations for better performance */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
