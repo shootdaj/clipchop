@@ -17,7 +17,7 @@ const bouncySpring = {
 // Linear transition - constant speed, no easing
 const linearTransition = {
   duration: 0.2,
-  ease: 'linear',
+  ease: 'linear' as const,
 }
 
 const formatTime = (seconds: number): string => {
