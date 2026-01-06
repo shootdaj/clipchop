@@ -72,12 +72,10 @@ export function SplitPreview({ segments, totalDuration }: SplitPreviewProps) {
               return (
                 <motion.div
                   key={segment.index}
-                  layout
-                  initial={{ opacity: 1 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0, scaleX: 0 }}
-                  transition={{ layout: layoutSpring, opacity: { duration: 0.15 } }}
-                  style={{ width: `${widthPercent}%`, originX: 0 }}
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: `${widthPercent}%`, opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  transition={layoutSpring}
                   className={cn(
                     'segment-bar',
                     'h-full border-r border-background/30 last:border-r-0',
