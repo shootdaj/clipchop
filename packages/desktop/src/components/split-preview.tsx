@@ -14,10 +14,10 @@ const bouncySpring = {
   mass: 0.6,
 }
 
-// Simple ease-in-out for smooth width transitions
-const smoothTransition = {
-  duration: 0.25,
-  ease: [0.4, 0, 0.2, 1], // ease-in-out
+// Linear transition - constant speed, no easing
+const linearTransition = {
+  duration: 0.2,
+  ease: 'linear',
 }
 
 const formatTime = (seconds: number): string => {
@@ -69,8 +69,9 @@ export function SplitPreview({ segments, totalDuration }: SplitPreviewProps) {
             return (
               <motion.div
                 key={segment.index}
+                initial={false}
                 animate={{ width: `${widthPercent}%` }}
-                transition={smoothTransition}
+                transition={linearTransition}
                 className={cn(
                   'segment-bar',
                   'h-full border-r border-background/30 last:border-r-0',
