@@ -14,7 +14,7 @@ dependencies:
   ffmpeg_kit_flutter_new: ^4.1.0
 
   # File picking
-  file_picker: ^8.0.0+1
+  file_picker: ^10.3.8
 
   # Video player for preview
   video_player: ^2.9.2
@@ -36,7 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   # Share functionality
-  share_plus: ^9.0.0
+  share_plus: ^10.1.4
 
   # UUID for unique filenames
   uuid: ^4.4.2
