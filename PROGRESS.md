@@ -1,7 +1,9 @@
 # Clipchop - Implementation Progress
 
-## Current Status: Multi-Platform Complete (Desktop), Mobile Blocked
-**Last Updated**: 2026-01-05 (Session 8) - Unified CI/CD, Version Display Fix
+## Current Status: v2.0.0 Stable Release
+**Last Updated**: 2026-01-06 (Session 9) - Mobile FFmpeg.wasm Fix, Stable v2.0.0 Release
+
+**Stable Release**: v2.0.0 - Tag this version to revert if needed
 
 ---
 
@@ -64,6 +66,60 @@
 ---
 
 ## Completed Items
+
+### 2026-01-06 (Session 9) - Mobile FFmpeg.wasm Fix, Stable v2.0.0 Release
+**MAJOR STABLE RELEASE**: v2.0.0
+
+#### Problem Solved:
+- **VFR (Variable Frame Rate) Videos**: Phone videos were choppy when split on mobile
+- **Root Cause**: WebCodecs doesn't handle VFR properly on mobile devices
+- **Solution**: Use FFmpeg.wasm for mobile (same engine as desktop FFmpeg)
+
+#### FFmpeg.wasm Implementation:
+- **Background Pre-loading**: Starts downloading 30MB wasm file when app loads on mobile
+- **Progress Tracking**: Shows "Downloading: 15.2/30.6 MB" with live progress
+- **Global State**: FFmpeg instance shared across hook instances (loads once)
+- **Mobile Optimizations**:
+  - `ultrafast` preset for faster encoding
+  - CRF 28 (lower quality = faster)
+  - Max 720p resolution forced on mobile
+  - 96k audio bitrate
+
+#### Technical Changes:
+- **`use-video-splitter-ffmpeg-wasm.ts`**: Complete rewrite with:
+  - `preloadFFmpeg()` function for background loading
+  - Custom `downloadWithProgress()` for tracking wasm download
+  - Global state management (`globalFFmpeg`, `globalLoadPromise`)
+  - Mobile-optimized FFmpeg arguments
+- **`use-video-splitter-hybrid.ts`**: Platform detection logic
+  - Electron → Native FFmpeg
+  - Mobile browser → FFmpeg.wasm
+  - Desktop browser → WebCodecs
+- **Interface updates**: Added `loadingMessage` to `SplitProgress` in all hooks
+- **App.tsx**: Dynamic loading message display
+
+#### Files Modified:
+- `src/hooks/use-video-splitter-ffmpeg-wasm.ts` - Complete rewrite
+- `src/hooks/use-video-splitter-hybrid.ts` - Unchanged (already had correct logic)
+- `src/hooks/use-video-splitter.ts` - Added loadingMessage interface
+- `src/hooks/use-video-splitter-electron.ts` - Added loadingMessage interface
+- `src/hooks/use-video-splitter-mediarecorder.ts` - Added loadingMessage interface
+- `src/App.tsx` - Dynamic loading message
+
+#### Why v2.0.0?
+This is marked as a major stable release because:
+1. Mobile video splitting now works correctly
+2. VFR handling is properly addressed
+3. All platforms have production-ready implementations
+4. Can be used as a safe rollback point
+
+#### Previous Attempts (What Failed):
+1. **WebCodecs with 60fps** - Still choppy on mobile
+2. **WebCodecs with mobile optimizations** - Still choppy
+3. **MediaRecorder approach** - Audio/video sync issues
+4. **FFmpeg.wasm with wrong config** - Loading failures
+
+---
 
 ### 2026-01-05 (Session 8) - Unified CI/CD, Version Display Fix
 **Updates**: Moved Vercel deployment to GitHub Actions, fixed version display

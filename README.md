@@ -1,207 +1,188 @@
-# Clipchop - Native Video Splitter ⚡
+# Clipchop - Video Splitter
 
-Fast, native desktop app for splitting videos into smaller segments. Perfect for preparing content for social media platforms like Instagram, TikTok, and YouTube.
+Split videos into smaller segments for social media (Instagram, TikTok, YouTube).
 
-## ⚡ Performance
+**Version**: v2.0.0 (Stable)
+**Live Demo**: https://desktop-seven-lake.vercel.app
+**Releases**: https://github.com/shootdaj/clipchop/releases
 
-- **20-30x faster** than browser-based encoding
-- Hardware GPU acceleration (VideoToolbox, NVENC, Quick Sync)
-- Process 4K videos in minutes, not hours
+---
 
-### Encoding Speed Comparison
+## Performance
 
-| Resolution | Web Version | Native (CPU) | Native (GPU) | Speedup |
-|------------|-------------|--------------|--------------|---------|
-| **4K** | 30-60 min | 10-20 min | **1-2 min** | **20-30x** |
-| **1080p** | 4-8 min | 1.5-3 min | **10-20 sec** | **12-24x** |
-| **720p** | 1.5-3 min | 30-60 sec | **5-10 sec** | **10-18x** |
+| Platform | Technology | 4K Video | VFR Support |
+|----------|-----------|----------|-------------|
+| **Desktop App** | Native FFmpeg + GPU | 1-2 min | Excellent |
+| **Web (Desktop)** | WebCodecs | 5-15 min | Good |
+| **Web (Mobile)** | FFmpeg.wasm | 15-30 min | Excellent |
+
+Desktop app is **20-30x faster** with hardware GPU acceleration.
+
+---
 
 ## Features
 
-- **Predefined Durations**: 15s, 30s, 60s, 90s (optimized for social media)
-- **Custom Durations**: Specify any segment length
-- **Quality Options**: Full quality, HD (1920px), or SD (1280px)
-- **Smart Encoding**: Automatic hardware acceleration detection
-- **Beautiful UI**: Modern 3D dark theme with fluid animations
-- **Privacy First**: All processing happens locally on your machine
+- **Smart Platform Detection**: Automatically uses the best technology for your device
+- **Preset Durations**: 15s, 30s, 60s, 90s (optimized for social media)
+- **Custom Durations**: Any segment length you need
+- **Quality Options**: Full, HD (1920px), SD (1280px)
+- **VFR Video Support**: Handles phone videos with variable frame rates
+- **Privacy First**: All processing happens locally
+- **Beautiful UI**: Modern 3D dark theme with smooth animations
 
-## Platform Support
+---
 
-### Desktop App (Electron) - Fast
-- ✅ macOS 10.15+
-- ✅ Windows 10+
-- ✅ Linux (Ubuntu 18.04+)
-- ⚡ 20-30x faster with GPU acceleration
+## Quick Start
 
-### Web App (Browser) - Slow but Works Everywhere
-- ✅ Android (Chrome 102+)
-- ✅ iOS/Safari (limited support)
-- ✅ Any desktop browser with WebCodecs support
-- 🌐 No installation required
+### Try Online (No Install)
 
-## Installation
+Visit https://desktop-seven-lake.vercel.app
 
-### Desktop App
+### Desktop App (Fastest)
 
-Download from [GitHub Releases](https://github.com/yourusername/clipchop/releases)
-
-### Web App
-
-Visit [clipchop.vercel.app](https://clipchop.vercel.app) (or your domain)
+Download from [GitHub Releases](https://github.com/shootdaj/clipchop/releases)
 
 ### Development
 
-- Node.js 18+ or Bun
-- macOS, Windows, or Linux
-
-### Quick Start
-
 ```bash
-# Install dependencies
+# Clone
+git clone https://github.com/shootdaj/clipchop.git
+cd clipchop
+
+# Install
 bun install
 
-# Run in development mode
-bun run electron:dev
+# Run web version
+cd packages/desktop && bun run dev
 
-# Build for your platform
-bun run electron:build
+# Run desktop version
+cd packages/desktop && bun run electron:dev
 ```
+
+---
+
+## Platform Support
+
+### Desktop App (Electron)
+- macOS 10.15+ (VideoToolbox GPU acceleration)
+- Windows 10+ (NVENC/Quick Sync GPU acceleration)
+- Linux Ubuntu 18.04+ (VA-API)
+
+### Web App (Browser)
+- Chrome 102+ (Desktop) - WebCodecs
+- Chrome (Mobile) - FFmpeg.wasm with VFR support
+- PWA installable on Android
+
+---
 
 ## Usage
 
-1. **Launch the app**: Run `bun run electron:dev`
-2. **Select video**: Click to browse and select your video file
-3. **Choose duration**: Pick a preset (15s, 30s, etc.) or enter custom duration
-4. **Select quality**: 
-   - Full Quality: Original resolution (slowest, best quality)
-   - HD: 1920px max dimension (balanced)
-   - SD: 1280px max dimension (fastest)
-5. **Split**: Click "Split Video" and wait for processing
-6. **Download**: Files are automatically saved to temp folder
+1. **Select Video**: Drop a video or click to browse
+2. **Choose Duration**: Pick a preset or enter custom
+3. **Select Quality**: Full, HD, or SD
+4. **Split**: Click "Split Video"
+5. **Download**: Get your segments
+
+---
 
 ## Tech Stack
 
 - **Framework**: Electron + React 18 + TypeScript
-- **Video Processing**: FFmpeg (fluent-ffmpeg)
-- **Hardware Acceleration**: 
-  - macOS: VideoToolbox
-  - Windows: NVENC (NVIDIA) / Quick Sync (Intel)
-  - Linux: VA-API
-- **UI**: Tailwind CSS + Motion (Framer Motion)
+- **Video Processing**:
+  - Desktop: Native FFmpeg (fluent-ffmpeg)
+  - Web Desktop: WebCodecs API
+  - Web Mobile: FFmpeg.wasm
+- **GPU Acceleration**: VideoToolbox (Mac), NVENC (Windows), VA-API (Linux)
+- **UI**: Tailwind CSS v4 + Motion (Framer Motion)
 - **Build**: Vite + electron-builder
+- **CI/CD**: GitHub Actions (auto-deploys to Vercel + builds Electron)
 
-## Development
+---
 
-### Project Structure
+## Project Structure
 
 ```
 clipchop/
-├── electron/              # Electron main process
-│   ├── main.ts           # Window management & app lifecycle
-│   ├── preload.ts        # Secure IPC bridge
-│   ├── ffmpeg.ts         # FFmpeg wrapper
-│   └── ipc-handlers.ts   # IPC communication handlers
-├── src/                  # React frontend
-│   ├── components/       # UI components
-│   ├── hooks/            # React hooks
-│   ├── lib/              # Utilities
-│   └── types/            # TypeScript definitions
-├── dist/                 # Built web assets
-└── dist-electron/        # Compiled Electron code
+├── packages/desktop/          # Main app (Electron + Web)
+│   ├── electron/              # Electron main process
+│   │   ├── ffmpeg.ts          # FFmpeg wrapper with GPU
+│   │   └── ipc-handlers.ts    # IPC handlers
+│   ├── src/
+│   │   ├── hooks/             # Video splitter hooks
+│   │   │   ├── use-video-splitter-hybrid.ts    # Platform detection
+│   │   │   ├── use-video-splitter-electron.ts  # Native FFmpeg
+│   │   │   ├── use-video-splitter.ts           # WebCodecs
+│   │   │   └── use-video-splitter-ffmpeg-wasm.ts # Mobile
+│   │   └── components/        # React components
+│   └── e2e/                   # Playwright tests
+└── .github/workflows/         # CI/CD
 ```
 
-### Available Scripts
+---
+
+## Scripts
 
 ```bash
 # Development
-bun run dev              # Vite dev server only (web mode)
-bun run electron:dev     # Full Electron app with hot reload
+bun run dev              # Web dev server
+bun run electron:dev     # Electron app with hot reload
 
 # Build
-bun run build            # Build web assets
-bun run electron:build   # Build Electron app for all platforms
-
-# Platform-specific builds
-bun run electron:build:mac    # macOS (DMG + ZIP)
-bun run electron:build:win    # Windows (NSIS + Portable)
-bun run electron:build:linux  # Linux (AppImage + deb)
+bun run build            # Web assets
+bun run electron:build   # All platforms
+bun run electron:build:mac    # macOS only
+bun run electron:build:win    # Windows only
 
 # Testing
-bun run test             # Run unit tests
-bun run test:run         # Run tests once
+bun run test             # Unit tests (62 tests)
+bun run test:e2e:smoke   # Quick smoke tests
+bun run test:e2e         # Full E2E suite
 ```
 
-## Hardware Acceleration
-
-The app automatically detects and uses hardware acceleration:
-
-### macOS
-- Uses **VideoToolbox** (H.264 hardware encoding)
-- Works on all Macs with hardware encoder
-- 10-15x faster than software encoding
-
-### Windows
-- Tries **NVENC** (NVIDIA GPUs) first
-- Falls back to **Quick Sync** (Intel CPUs)
-- Falls back to software (libx264) if neither available
-- 10-20x faster with GPU
-
-### Linux
-- Uses **VA-API** when available
-- Falls back to software encoding
-- 5-10x faster with hardware support
+---
 
 ## Troubleshooting
 
-### Slow Encoding
-- Make sure you're using HD or SD quality for large videos
-- Check that hardware acceleration is working (look at console logs)
-- Close other apps that might be using GPU
+### Mobile: "Failed to load video engine"
+- Check network connection (30MB download required)
+- Try refreshing the page
+- Clear browser cache
 
-### App Won't Launch
-- Make sure all dependencies are installed: `bun install`
-- Rebuild Electron files: `bun x tsc -p tsconfig.electron.json`
-- Check console for errors
+### Choppy Video Output
+- On mobile: Now uses FFmpeg.wasm (should be smooth)
+- On desktop: Uses WebCodecs (should be smooth)
 
-### Video Won't Open
-- Supported formats: MP4, MOV, WebM, AVI, MKV
-- Try converting to MP4 first if using exotic codec
+### Old Version Showing
+- Clear service worker cache in DevTools
+- Hard refresh (Cmd+Shift+R / Ctrl+Shift+R)
 
-## Performance Tips
+---
 
-1. **Use Quality Settings Wisely**:
-   - 4K videos: Use HD or SD for much faster encoding
-   - 1080p videos: HD or Full Quality works well
-   - 720p videos: Full Quality is fine
+## Contributing
 
-2. **Hardware Acceleration**:
-   - Ensure graphics drivers are up to date
-   - Close GPU-intensive apps during encoding
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature/amazing-feature`
+3. Run tests: `bun run test && bun run test:e2e:smoke`
+4. Commit: `git commit -m 'feat: Add amazing feature'`
+5. Push and open Pull Request
 
-3. **File Sizes**:
-   - Larger bitrates = larger files but better quality
-   - SD quality is perfect for social media
-
-## Browser Compatibility (Web Version Deprecated)
-
-The web version (WebCodecs-based) is deprecated due to poor performance. Use the native Electron app for production use.
+---
 
 ## License
 
 MIT
 
-## Contributing
-
-Contributions welcome! Please read the contribution guidelines first.
+---
 
 ## Credits
 
-- Built with [Electron](https://www.electronjs.org/)
-- Video processing by [FFmpeg](https://ffmpeg.org/)
-- UI components by [shadcn/ui](https://ui.shadcn.com/)
-- Animations by [Motion](https://motion.dev/)
+- [Electron](https://www.electronjs.org/)
+- [FFmpeg](https://ffmpeg.org/)
+- [FFmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm)
+- [WebAV](https://github.com/nickreynolds/WebAV)
+- [shadcn/ui](https://ui.shadcn.com/)
+- [Motion](https://motion.dev/)
 
 ---
 
-**Made with ⚡ for creators who value their time**
-
+**Made for creators who value their time**

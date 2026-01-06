@@ -1,18 +1,35 @@
-# ⚠️ AGENT: READ THIS FILE FIRST BEFORE ANY WORK ⚠️
-
-If you are starting a new session, **STOP** and read this entire file BEFORE doing anything else.
-
----
-
 # Clipchop - Multi-Platform Video Splitter
 
 Video splitter app that cuts videos into smaller durations for social media (Instagram, TikTok, etc.)
 
-**Last Updated**: 2026-01-05 (Session 8) - Unified CI/CD, Version Display Fix
+**Last Updated**: 2026-01-06 (Session 9) - Mobile FFmpeg.wasm Fix, Stable v2.0.0 Release
+
+**Stable Release**: v2.0.0 - https://github.com/shootdaj/clipchop/releases/tag/v2.0.0
 
 ---
 
-## 🚨 Agent Handoff Protocol
+## Quick Start
+
+```bash
+# Clone
+git clone https://github.com/shootdaj/clipchop.git
+cd clipchop
+
+# Install dependencies
+bun install
+
+# Run web version
+cd packages/desktop && bun run dev
+
+# Run desktop (Electron) version
+cd packages/desktop && bun run electron:dev
+```
+
+**Live Demo**: https://desktop-seven-lake.vercel.app
+
+---
+
+## Agent Handoff Protocol
 
 **CRITICAL**: This project has NO memory between sessions. Always:
 
@@ -22,312 +39,143 @@ Video splitter app that cuts videos into smaller durations for social media (Ins
 4. **Update `PROGRESS.md`** - Log what you completed
 5. **Use TodoWrite** - Track in-session progress
 
-## ⚠️ DEPLOYMENT IS AUTOMATIC - DO NOT MANUALLY DEPLOY
+## DEPLOYMENT IS AUTOMATIC
 
-**NEVER run `vercel` commands manually.** Deployment is 100% automatic via GitHub Actions:
+**NEVER run `vercel` commands manually.** Deployment is 100% automatic:
 
 1. **Push to master** → GitHub Actions triggers
-2. **CI/CD builds** → Electron apps for all platforms + Vercel web deployment
+2. **CI/CD builds** → Electron apps + Vercel web deployment
 3. **Done** → No manual intervention needed
 
-To deploy: Just `git push origin master` - that's it!
+To deploy: Just `git push origin master`
 
-## 🧪 PRE-COMMIT TESTING REQUIREMENT
+## PRE-COMMIT TESTING REQUIREMENT
 
-**ALWAYS run tests before committing code changes:**
+**ALWAYS run tests before committing:**
 
 ```bash
 cd packages/desktop
-
-# 1. Run unit tests (must all pass)
-bun run test
-
-# 2. Run E2E smoke tests (must all pass)
-bun run test:e2e:smoke
-
-# 3. If both pass, safe to commit
+bun run test           # Unit tests (must pass)
+bun run test:e2e:smoke # Smoke tests (must pass)
 ```
-
-**DO NOT commit if any test fails.** Fix the issue first.
 
 ---
 
-## Current Status (Session 8 - Jan 5, 2026)
+## Current Status (v2.0.0 Stable - Jan 6, 2026)
 
-### ✅ What's Working
+### What's Working
 
 **Desktop App (Electron)**:
-- ✅ Fully functional on macOS/Windows/Linux
-- ✅ Native FFmpeg with GPU acceleration (VideoToolbox/NVENC)
-- ✅ 20-30x faster than web version
-- ✅ Video rotation fixed (uses FFmpeg autorotate)
-- ✅ All quality options working (Full/HD/SD)
-- ✅ Time estimates with progress updates
-- ✅ Video preview with scrubbing (input + output)
-- ✅ Download to ~/Downloads functionality
-- ✅ Local development: `bun run dev:desktop` from root
+- Fully functional on macOS/Windows/Linux
+- Native FFmpeg with GPU acceleration (VideoToolbox/NVENC)
+- 20-30x faster than web version
+- Video rotation handled automatically
+- All quality options (Full/HD/SD)
+- Video preview with scrubbing
+- Download to ~/Downloads
 
 **Web App (Vercel)**:
-- ✅ Deployed to https://desktop-seven-lake.vercel.app
-- ✅ PWA support with manifest and service worker
-- ✅ Works on Chrome 102+ desktop browsers
-- ✅ Video preview with scrubbing (input + output)
-- ✅ Download functionality (blob URLs)
-- ✅ Audio/video sync fixed (uses clip's actual duration after split)
-- ⚠️ VERY SLOW (30-60 min for 4K videos) - WebCodecs limitation
-- ⚠️ Limited Android support (Chrome < 102 won't work)
-- ✅ Shows install prompt for PWA on mobile
+- Live at https://desktop-seven-lake.vercel.app
+- PWA installable on mobile devices
+- Desktop browsers: WebCodecs (fast for desktop hardware)
+- Mobile browsers: FFmpeg.wasm (handles VFR videos properly)
+- Download functionality via blob URLs
+- Version display in footer
 
-**Testing** (Session 7):
-- ✅ 62 unit tests (vitest) - segment calculations + ffmpeg utilities
-- ✅ E2E tests (Playwright) - browser-based video splitting
-- ✅ Smoke tests for quick iteration (~7s)
-- ✅ SSIM-based frame comparison for quality verification
+**Mobile Support (v2.0.0 NEW)**:
+- FFmpeg.wasm with background pre-loading
+- Download progress tracking (MB downloaded/total)
+- Mobile-optimized encoding (720p max, ultrafast preset)
+- Handles Variable Frame Rate (VFR) phone videos correctly
 
-**Animation Performance** (Session 6 Fixes):
-- ✅ Moved orb animations to CSS (compositor thread)
-- ✅ Optimized spring configs (higher damping, less jank)
-- ✅ Removed layout-thrashing patterns
-- ✅ Capped stagger delays for large lists
+**Testing**:
+- 62 unit tests (vitest)
+- E2E tests (Playwright)
+- Smoke tests for quick iteration (~7s)
 
-### ⚠️ Known Issues
+### Known Limitations
 
-**Web Version**:
-- Slow performance (inherent to browser-based encoding)
-- Service worker cache can cause stale assets (users need hard refresh)
-- Android Chrome may not support WebCodecs depending on version
-
-**Mobile Native App (React Native)**:
-- ❌ BLOCKED: All FFmpeg packages deprecated
-  - `ffmpeg-kit-react-native`: 404 errors, deprecated
-  - `react-native-ffmpeg`: jcenter() removed, deprecated
-- 🔧 Code ready in `packages/mobile` but won't build
-- 📱 Waiting for maintained FFmpeg package
+- **Web on Mobile**: Slow encoding (WebAssembly limitation)
+- **Large Files**: 30MB ffmpeg.wasm download on first use
+- **Service Worker**: May cache old versions (clear cache if issues)
 
 ---
 
 ## Architecture
 
-### Monorepo Structure
+### Video Processing Approaches
+
+| Platform | Technology | Speed | VFR Handling |
+|----------|-----------|-------|--------------|
+| **Desktop (Electron)** | Native FFmpeg | 1-2 min | Excellent |
+| **Web (Desktop Browser)** | WebCodecs | 5-15 min | Good |
+| **Web (Mobile Browser)** | FFmpeg.wasm | 15-30 min | Excellent |
+
+### Key Files
 
 ```
 clipchop/
-├── packages/
-│   ├── shared/          # Shared business logic (75% reuse)
-│   │   └── src/
-│   │       ├── video-utils.ts    # Split calculations
-│   │       └── utils.ts          # Utilities
-│   ├── desktop/         # Electron + Web (hybrid)
-│   │   ├── electron/    # Electron main process
-│   │   │   ├── main.ts
-│   │   │   ├── preload.ts
-│   │   │   ├── ffmpeg.ts         # FFmpeg wrapper
-│   │   │   └── ipc-handlers.ts
-│   │   └── src/         # React frontend
-│   │       ├── hooks/
-│   │       │   ├── use-video-splitter.ts           # WebCodecs (web)
-│   │       │   ├── use-video-splitter-electron.ts  # FFmpeg (Electron)
-│   │       │   ├── use-video-splitter-ffmpeg-wasm.ts # FFmpeg.wasm (universal)
-│   │       │   └── use-video-splitter-hybrid.ts    # Auto-detection
-│   │       └── components/
-│   │           ├── video-preview.tsx       # HTML5 video player with scrubbing
-│   │           ├── video-preview-grid.tsx  # Output clips grid with downloads
-│   │           ├── duration-selector.tsx   # Split duration picker
-│   │           ├── split-preview.tsx       # Timeline visualization
-│   │           └── video-uploader.tsx      # File picker with drag-drop
-│   └── mobile/          # React Native (Android/iOS) - BLOCKED
-│       ├── android/
-│       ├── ios/
-│       └── src/
-└── .github/workflows/   # CI/CD
-    ├── release.yml               # Semantic version + Electron builds
-    ├── mobile-release.yml        # Mobile builds (failing)
-    └── github-pages.yml          # Web deployment
+├── packages/desktop/
+│   ├── src/hooks/
+│   │   ├── use-video-splitter-hybrid.ts    # Auto-detects platform
+│   │   ├── use-video-splitter-electron.ts  # Native FFmpeg
+│   │   ├── use-video-splitter.ts           # WebCodecs
+│   │   └── use-video-splitter-ffmpeg-wasm.ts # FFmpeg.wasm for mobile
+│   ├── electron/
+│   │   ├── ffmpeg.ts                       # FFmpeg wrapper
+│   │   └── ipc-handlers.ts                 # Electron IPC
+│   └── src/App.tsx                         # Main UI
+└── .github/workflows/
+    └── release.yml                         # CI/CD (Electron + Vercel)
 ```
 
-### Platform Support Matrix
+### Platform Detection Logic
 
-| Platform | Technology | Speed | Status | Deploy Method |
-|----------|-----------|-------|--------|---------------|
-| **Windows** | Electron + FFmpeg | ⚡ 1-2 min | ✅ Working | GitHub Releases |
-| **macOS** | Electron + FFmpeg | ⚡ 1-2 min | ✅ Working | GitHub Releases |
-| **Linux** | Electron + FFmpeg | ⚡ 1-2 min | ✅ Working | GitHub Releases |
-| **Web (Desktop)** | WebCodecs | 🐌 30-60 min | ✅ Working | Vercel |
-| **Android** | WebCodecs (PWA) | 🐌 30-60 min | ⚠️ Limited | Vercel |
-| **Android Native** | React Native + FFmpeg | ⚡ 2-5 min | ❌ Blocked | GitHub Actions |
-| **iOS Native** | React Native + FFmpeg | ⚡ 2-5 min | ❌ Blocked | GitHub Actions |
-
----
-
-## Tech Stack (Current)
-
-### Desktop (Electron)
-- **Framework**: Electron 39 + React 18 + TypeScript
-- **Video Processing**: FFmpeg (fluent-ffmpeg)
-- **Hardware Acceleration**: VideoToolbox (Mac), NVENC (Windows), VA-API (Linux)
-- **Build**: Vite + electron-builder
-- **Performance**: 20-30x faster than web
-
-### Web (Browser)
-- **Framework**: React 18 + TypeScript
-- **Video Processing**: WebCodecs API (browser-native) OR @webav/av-cliper
-- **Animation**: Motion (Framer Motion)
-- **Components**: shadcn/ui + custom 3D components
-- **Styling**: Tailwind CSS v4
-- **Hosting**: Vercel
-- **PWA**: manifest.json + service worker
-
-### Mobile (React Native) - BLOCKED
-- **Framework**: React Native 0.83
-- **Video Processing**: BLOCKED (no working FFmpeg package)
-- **Build**: Gradle (Android), Xcode (iOS)
-- **Status**: Code ready, dependencies broken
-
-### Shared
-- **Language**: TypeScript
-- **Package Manager**: Bun (root + desktop), npm (mobile)
-- **Code Sharing**: ~75% logic reused across platforms
-
----
-
-## Key Technical Details
-
-### Video Processing Approaches
-
-**1. Desktop (Electron)** - CURRENT PRODUCTION
 ```typescript
-// Uses native FFmpeg via fluent-ffmpeg
-ffmpeg(filePath)
-  .inputOptions(['-accurate_seek', `-ss ${startTime}`])
-  .duration(duration)
-  .videoCodec('h264_videotoolbox')  // or h264_nvenc on Windows
+// use-video-splitter-hybrid.ts
+if (window.electron) {
+  // Desktop: Use native FFmpeg (fastest)
+} else if (isMobileDevice()) {
+  // Mobile: Use ffmpeg.wasm (handles VFR properly)
+} else {
+  // Desktop browser: Use WebCodecs (fast, good quality)
+}
 ```
-- Automatic rotation handling via FFmpeg's autorotate
-- Hardware GPU encoding
-- Extremely fast
-
-**2. Web (Browser)** - PRODUCTION
-```typescript
-// Uses WebCodecs or WebAV
-const clip = new MP4Clip(file.stream())
-await clip.split(timeInMicroseconds)
-```
-- Slow (software-only)
-- Requires COOP/COEP headers
-- Chrome 102+ only
-
-**3. Mobile Native** - BLOCKED
-```typescript
-// Would use FFmpeg Kit
-await RNFFmpeg.execute(command)
-```
-- All packages deprecated
-- Can't build until resolved
-
-### Animation Performance Patterns (Session 6)
-
-**GPU-Accelerated Properties** (fast, use these):
-- `transform` (translate, scale, rotate)
-- `opacity`
-
-**Layout-Triggering Properties** (slow, avoid animating):
-- `height`, `width` (especially `auto`)
-- `padding`, `margin`
-- Any property that causes reflow
-
-**Spring Configuration Guidelines**:
-```typescript
-// Optimized defaults - higher damping = less oscillation = smoother
-const fluidSpring = { stiffness: 200, damping: 25, mass: 0.8 }
-const bouncySpring = { stiffness: 300, damping: 22, mass: 0.6 }
-```
-
-**CSS vs JavaScript Animations**:
-- Use CSS for infinite/background animations (runs on compositor thread)
-- Use Motion.js only for user-triggered interactions
-- Always add `will-change: transform` for CSS animations
-
-**Stagger Delay Capping**:
-```typescript
-// Prevent long total animation times on large lists
-transition={{ ...spring, delay: Math.min(index * 0.03, 0.15) }}
-```
-
-### Critical Bug Fixes (Session 5)
-
-**Video Rotation Issue** (RESOLVED):
-- Problem: Videos rotated 90° wrong
-- Root Cause: FFmpeg auto-rotates during decode, we rotated again (double rotation)
-- Solution: Let FFmpeg autorotate, don't apply transpose filter
-- Code: Removed all transpose logic, dimensions calculated post-rotation
-
-**4K Encoding Performance** (RESOLVED for Desktop):
-- Problem: Web took 30-60 minutes for 4K
-- Solution: Electron with GPU acceleration
-- Result: Now 1-2 minutes (20-30x speedup)
-
-**PWA Installation** (RESOLVED):
-- Problem: Icons were 1x1 pixel placeholders
-- Solution: Created proper 192x192 and 512x512 PNGs
-- Result: PWA now installable on Android
 
 ---
 
 ## Running the Apps
 
-### Desktop Development
+### Development
+
 ```bash
-cd /Users/anshul/Anshul/Code/clipchop
-bun run dev:desktop
-# or
+# Web version
+cd packages/desktop && bun run dev
+# Opens at http://localhost:5173
+
+# Electron version
 cd packages/desktop && bun run electron:dev
 ```
 
-### Web Development
-```bash
-cd packages/desktop && bun run dev
-# Opens at http://localhost:5173
-```
+### Building
 
-### Mobile Development (Currently Broken)
 ```bash
-cd packages/mobile
-npm install --legacy-peer-deps
-npx react-native run-android  # Requires Android SDK
-```
+# Web (auto-deploys on push to master)
+bun run build
 
-### Building for Production
-
-**Desktop**:
-```bash
-cd packages/desktop
+# Electron
 bun run electron:build        # All platforms
 bun run electron:build:mac    # Mac only
 bun run electron:build:win    # Windows only
 ```
 
-**Web** (auto-deploys via CI/CD on push to master):
+### Testing
+
 ```bash
-cd packages/desktop
-bun run build  # For local testing only
-# DO NOT run vercel manually - deployment is automatic via GitHub Actions
-```
-
-### Running Tests
-```bash
-cd packages/desktop
-
-# Unit tests (62 tests, ~3s)
-bun run test           # Run once
-bun run test:watch     # Watch mode
-
-# E2E tests (Playwright)
-bun run test:e2e       # Full suite (slow, includes video processing)
+bun run test           # Unit tests (62 tests, ~3s)
 bun run test:e2e:smoke # Quick smoke tests (~7s)
-bun run test:e2e:ui    # Interactive UI mode
-
-# All tests
-bun run test:all       # Unit + E2E
+bun run test:e2e       # Full E2E suite
+bun run test:all       # Everything
 ```
 
 ---
@@ -336,243 +184,129 @@ bun run test:all       # Unit + E2E
 
 ### Production URLs
 
-**Web App**: https://desktop-seven-lake.vercel.app  
-**Desktop Releases**: https://github.com/shootdaj/clipchop/releases  
-**Mobile**: N/A (blocked)
+- **Web App**: https://desktop-seven-lake.vercel.app
+- **Desktop Releases**: https://github.com/shootdaj/clipchop/releases
+- **Stable v2.0.0**: https://github.com/shootdaj/clipchop/releases/tag/v2.0.0
 
-### CI/CD Workflows
+### CI/CD (GitHub Actions)
 
-**GitHub Actions** (`.github/workflows/release.yml`):
-- Triggered on push to master, handles ALL deployments:
-  - Semantic versioning (auto-bumps version based on commit messages)
-  - Creates GitHub Release
-  - Builds Electron apps for macOS/Windows/Linux
-  - Uploads binaries to the release
-  - **Deploys to Vercel** (pre-built, with correct version)
-- `.github/workflows/mobile-release.yml` - Triggered by `mobile-v*` tags (failing)
-- `.github/workflows/github-pages.yml` - Triggered by push to master
+All handled by `.github/workflows/release.yml`:
+- Semantic versioning from commit messages
+- Electron builds for macOS/Windows/Linux
+- Vercel deployment with pre-built assets
 
-**Commit Message Conventions** (semantic-release):
-- `feat: description` → Minor version bump (1.0.0 → 1.1.0)
-- `fix: description` → Patch version bump (1.0.0 → 1.0.1)
+### Commit Message Conventions
+
+- `feat: description` → Minor version bump
+- `fix: description` → Patch version bump
 - `chore: description` → No version bump
 
-**Vercel Deployment**:
-- ⚠️ Git integration DISABLED - deploys via GitHub Actions only
-- Uses pre-built output with `--prebuilt` flag
-- Version injected from git tags during CI build
-- Web URL: https://desktop-seven-lake.vercel.app
-
-**Required GitHub Secrets**:
-- `VERCEL_TOKEN` - Vercel API token (Full Account scope)
-- `VERCEL_ORG_ID` - From `.vercel/project.json`
-- `VERCEL_PROJECT_ID` - From `.vercel/project.json`
-
 ---
 
-## Critical Files to Update
+## FFmpeg.wasm Mobile Implementation (v2.0.0)
 
-When making changes, update these:
+### How It Works
 
-1. **This file** (`CLAUDE.md`) - Architecture, status, known issues
-2. **`PROGRESS.md`** - Session history, what was completed
-3. **`packages/desktop/src/hooks/use-video-splitter-hybrid.ts`** - Auto-detects Electron vs Web
-4. **`packages/desktop/electron/ffmpeg.ts`** - Video encoding logic
-5. **`packages/desktop/src/App.tsx`** - Main UI, spring configs, preview integration
-6. **`packages/desktop/src/index.css`** - CSS animations (orbs, progress, etc.)
+1. **Background Pre-loading**: Starts downloading 30MB wasm when app loads on mobile
+2. **Progress Tracking**: Shows "Downloading: 15.2/30.6 MB" during download
+3. **Global State**: FFmpeg instance shared across components (loads once)
+4. **Mobile Optimizations**:
+   - `ultrafast` preset
+   - CRF 28 (lower quality = faster)
+   - Max 720p resolution
+   - 96k audio bitrate
 
----
+### Why FFmpeg.wasm for Mobile?
 
-## Current Blockers
+- **VFR Handling**: Phone videos have Variable Frame Rate
+- **WebCodecs Issue**: Choppy output on mobile (timing mismatch)
+- **FFmpeg.wasm**: Same engine as desktop FFmpeg, handles VFR correctly
 
-### Mobile Native App
-**Issue**: No working FFmpeg package for React Native  
-**Packages Tried**:
-- `ffmpeg-kit-react-native` v6.0.2 - Deprecated, 404 errors
-- `react-native-ffmpeg` v0.5.2 - Deprecated, jcenter() removed
+### Key Code
 
-**Resolution Options**:
-1. Wait for `@ffmpeg/ffmpeg` React Native port
-2. Build custom native modules (Java/Kotlin + Swift)
-3. Use web version for mobile (current workaround)
-
-**Code Status**: Complete and ready in `packages/mobile/`, just can't build
-
----
-
-## Performance Benchmarks (User's 1:34 4K Video)
-
-| Platform | Time to Split | Speedup vs Web |
-|----------|--------------|----------------|
-| **Desktop (Electron)** | 1-2 minutes | 20-30x faster |
-| **Web (Desktop Chrome)** | 30-60 minutes | 1x (baseline) |
-| **Android Chrome (PWA)** | 30-60 minutes | 1x |
-| **Android Native (RN)** | Would be 2-5 min | Blocked |
-
----
-
-## Repository Info
-
-**GitHub**: https://github.com/shootdaj/clipchop  
-**Branch**: master  
-**Latest Commits** (as of Session 5):
-- 16241f4: PWA icons fixed
-- 8621915: PWA support added
-- c4edac8: React Native mobile app created
-- d0b8849: Electron conversion complete
-
----
-
-## Next Agent Should Know
-
-### If Continuing Mobile Work:
-1. Check if FFmpeg packages are maintained again
-2. Alternative: Implement custom native modules
-3. Consider Capacitor as FFmpeg wrapper alternative
-
-### If Optimizing Web:
-1. Current web version works but is slow (inherent limitation)
-2. FFmpeg.wasm hook created (`use-video-splitter-ffmpeg-wasm.ts`) but not integrated
-3. Could add for broader browser support (even slower than WebCodecs)
-
-### If Fixing PWA:
-1. Service worker caches aggressively - can cause stale asset issues
-2. Icons must be proper-sized PNGs (not placeholders)
-3. Manifest requires absolute paths for icons on Vercel
-
-### If Adding/Modifying Animations:
-1. Never animate `height: 'auto'` - use opacity/transform instead
-2. Never use Motion.js for infinite animations - use CSS
-3. Always cap stagger delays with `Math.min(index * delay, maxDelay)`
-4. Remove unnecessary `layout` props - they cause excessive recalculations
-5. Use higher damping values (22-25) for smoother springs
-
-### Common Issues to Watch For:
-- **Module format conflicts**: Desktop needs CommonJS for Electron, ESM for Vite
-- **Workspace dependencies**: npm doesn't understand Bun's `workspace:*` syntax
-- **Video rotation**: Always use FFmpeg autorotate, never manual transpose
-- **Cache problems**: Service worker can serve stale HTML/assets
-- **Animation jank**: Check for `height: 'auto'` animations or Motion.js infinite loops
-
----
-
-## Development Tips
-
-**Testing Video Rotation**:
-```bash
-# Use test-all-transpose.sh to verify rotation handling
-./test-all-transpose.sh
-# Check which output looks correct before changing code
-```
-
-**Debugging Electron**:
-- Console logs appear in terminal where you ran `electron:dev`
-- DevTools open automatically in dev mode
-- Check `dist-electron/` for compiled output
-
-**Debugging Web**:
-- Service worker can cache old versions - clear in DevTools
-- COOP/COEP headers required - verify in Network tab
-- WebCodecs availability: `'VideoEncoder' in window`
-
----
-
-## File Organization
-
-**Shared Code** (packages/shared):
-- `video-utils.ts` - All split timing calculations
-- Used by desktop AND mobile
-
-**Desktop/Web Code** (packages/desktop):
-- Same React components for both
-- Hooks auto-detect Electron vs Web mode
-- FFmpeg for Electron, WebCodecs for Web
-
-**Mobile Code** (packages/mobile):
-- React Native app
-- Copies of shared utilities (workspace dependency doesn't work with npm)
-- Currently can't build due to FFmpeg package issues
-
-**Documentation**:
-- `CLAUDE.md` (this file) - Agent handoff
-- `PROGRESS.md` - Session history
-- `ELECTRON_CONVERSION_PLAN.md` - Conversion technical details
-- `PERFORMANCE_ANALYSIS.md` - Speed benchmarks
-- `CI_CD_SETUP.md` - Deployment instructions
-- `DEPLOYMENT_READY.md` - Deploy checklist
-- `FINAL_STATUS.md` - Session 5 summary
-
----
-
-## Quick Reference
-
-### Start Electron App
-```bash
-cd packages/desktop && bun run electron:dev
-```
-
-### Test Web Version
-```bash
-cd packages/desktop && bun run dev
-# Visit http://localhost:5173
-```
-
-### Deploy Everything (Web + Desktop)
-```bash
-git push origin master
-# GitHub Actions handles: semantic version, Electron builds, Vercel deploy
-```
-
-### Manual Version Bump (if needed)
-```bash
-git tag v1.x.x
-git push origin v1.x.x
-# Triggers Electron builds + upload to that release
+```typescript
+// Pre-load on app mount for mobile
+useEffect(() => {
+  if (isMobile && !globalFFmpeg) {
+    preloadFFmpeg((percent, message) => {
+      console.log(`FFmpeg load: ${percent}% - ${message}`)
+    })
+  }
+}, [])
 ```
 
 ---
 
-## Important Notes
+## Reverting to Stable Version
 
-1. **Don't remove debug logs** until user confirms success (if in debug mode)
-2. **Always test rotation** with actual phone videos (have rotation metadata)
-3. **Never guess at fixes** - use runtime evidence and tests
-4. **Vercel caching** - Users may need to clear cache to see updates
-5. **Module systems** - Be careful with CommonJS vs ESM in Electron
-6. **ALWAYS verify deployment before reporting done** - Never tell the user something is deployed or complete without checking the live URL or GitHub Actions status first. Use WebFetch, gh commands, or other tools to confirm.
+If something breaks, you can always go back to v2.0.0:
 
----
+```bash
+git checkout v2.0.0
+bun install
+bun run build
+```
 
-## External Dependencies
-
-**Critical**:
-- FFmpeg binaries (bundled with Electron app via @ffmpeg-installer)
-- WebCodecs API (browser support varies)
-- Vercel CLI (`bun add -g vercel`) for deployment
-
-**Optional**:
-- Android SDK (for mobile development - currently blocked)
-- Xcode (for iOS development - currently blocked)
+Or check out any tagged release:
+```bash
+git tag -l  # List all versions
+git checkout v1.6.15  # Checkout specific version
+```
 
 ---
 
-## Success Criteria Met
+## Session History
 
-- ✅ Desktop app 20-30x faster
-- ✅ Works on Windows/Mac/Linux
-- ✅ Web version deployed (slow but functional)
-- ✅ PWA installable on mobile
-- ✅ Video rotation handling correct
-- ✅ Multi-platform with code reuse
-- ✅ Video preview with scrubbing (input + output)
-- ✅ Download functionality (~/Downloads on Electron, blob on web)
-- ✅ Smooth animations (CSS for infinite, optimized springs)
-- ✅ Unified CI/CD (GitHub Actions deploys Vercel + Electron)
-- ✅ Version display working (from git tags)
-- ⚠️ Android native blocked (package issues)
+| Session | Date | Changes |
+|---------|------|---------|
+| 9 | 2026-01-06 | FFmpeg.wasm mobile fix, v2.0.0 stable release |
+| 8 | 2026-01-05 | Unified CI/CD, version display fix |
+| 7 | 2026-01-05 | Audio sync fix, E2E tests |
+| 6 | 2026-01-05 | Video preview, animation fixes |
+| 5 | 2026-01-04 | Electron conversion, 20-30x speedup |
+
+For full history, see `PROGRESS.md`
 
 ---
 
-**For detailed session history, see `PROGRESS.md`**  
-**For deployment instructions, see `CI_CD_SETUP.md`**  
-**For performance data, see `PERFORMANCE_ANALYSIS.md`**
+## Troubleshooting
+
+### "Failed to load video engine" on Mobile
+- Check network connection (30MB download required)
+- Try refreshing the page
+- Clear browser cache and try again
+
+### Choppy Video Output
+- On mobile: Should now use FFmpeg.wasm automatically
+- On desktop: Check if using WebCodecs (should be smooth)
+
+### Old Version Showing
+- Clear service worker cache in DevTools
+- Hard refresh (Cmd+Shift+R / Ctrl+Shift+R)
+
+### Version Shows "0.0.0-development"
+- This means it's running in dev mode
+- Production builds get version from git tags
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature/amazing-feature`
+3. Run tests: `bun run test && bun run test:e2e:smoke`
+4. Commit: `git commit -m 'feat: Add amazing feature'`
+5. Push: `git push origin feature/amazing-feature`
+6. Open Pull Request
+
+---
+
+## License
+
+MIT
+
+---
+
+**Repository**: https://github.com/shootdaj/clipchop
+**Live Demo**: https://desktop-seven-lake.vercel.app
+**Stable Release**: v2.0.0
