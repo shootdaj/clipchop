@@ -110,6 +110,63 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  build-flutter:
+    needs: release
+    if: needs.release.outputs.new_release_published == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Pull latest changes
+        run: git pull origin master
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.4'
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+        working-directory: packages/clipchop_flutter
+
+      - name: Update version in pubspec.yaml
+        run: |
+          VERSION="${{ needs.release.outputs.new_release_version }}"
+          echo "Setting version to: $VERSION"
+          sed -i "s/^version: .*/version: $VERSION+1/" pubspec.yaml
+        working-directory: packages/clipchop_flutter
+
+      - name: Build APK
+        run: flutter build apk --release
+        working-directory: packages/clipchop_flutter
+
+      - name: Rename APK with version
+        run: |
+          VERSION="${{ needs.release.outputs.new_release_version }}"
+          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/ClipChop-${VERSION}-android.apk
+        working-directory: packages/clipchop_flutter
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.release.outputs.new_release_version }}
+          files: packages/clipchop_flutter/build/app/outputs/flutter-apk/ClipChop-*-android.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   # Deploy to Vercel - must wait for release job to get correct version
   deploy-vercel:
     needs: release
