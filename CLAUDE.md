@@ -298,6 +298,25 @@ For full history, see `PROGRESS.md`
 
 ---
 
+## Useful Tips
+
+### Send Files to Phone via QR Code
+Generate a QR code for any URL that can be scanned on mobile:
+```bash
+# Open QR code in browser (works for any URL)
+open "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=YOUR_URL_HERE"
+
+# Example: Send APK to phone
+open "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://github.com/shootdaj/clipchop/releases/download/v2.5.7/ClipChop-2.5.7-android.apk"
+```
+
+### Terminal QR Code (if qrcode-terminal is installed)
+```bash
+echo "https://your-url.com" | npx qrcode-terminal
+```
+
+---
+
 ## Troubleshooting
 
 ### "Failed to load video engine" on Mobile
