@@ -145,39 +145,67 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
     video: HTMLVideoElement,
     startTime: number,
     duration: number,
-    _outputWidth: number,
-    _outputHeight: number
+    outputWidth: number,
+    outputHeight: number
   ): Promise<Blob> => {
     return new Promise(async (resolve, reject) => {
+      let audioCtx: AudioContext | null = null
+
       try {
+        // Create canvas for smooth video capture
+        const canvas = document.createElement('canvas')
+        canvas.width = outputWidth
+        canvas.height = outputHeight
+        const ctx = canvas.getContext('2d')!
+
         // Seek to start time
         video.currentTime = startTime
         await new Promise<void>((res) => {
           video.onseeked = () => res()
         })
 
-        // Wait for video to be ready to play
+        // Wait for video to be ready
         await new Promise<void>((res) => {
-          if (video.readyState >= 3) {
-            res()
-          } else {
-            video.oncanplay = () => res()
-          }
+          if (video.readyState >= 3) res()
+          else video.oncanplay = () => res()
         })
 
-        // Unmute video for audio capture
+        // Pre-render first frame to canvas
+        ctx.drawImage(video, 0, 0, outputWidth, outputHeight)
+
+        // Unmute for audio capture
         video.muted = false
-        video.volume = 0.001 // Nearly silent but not muted
+        video.volume = 0.001
 
-        // Use video.captureStream() directly - keeps audio/video in perfect sync
-        // No canvas scaling to avoid sync issues
-        let stream: MediaStream
+        // Create canvas stream for video (smooth, no VFR issues)
+        const canvasStream = canvas.captureStream(30)
 
-        if ('captureStream' in video && typeof (video as any).captureStream === 'function') {
-          stream = (video as any).captureStream() as MediaStream
-          console.log(`video.captureStream(): ${stream.getVideoTracks().length} video, ${stream.getAudioTracks().length} audio tracks`)
-        } else {
-          throw new Error('captureStream not supported on this device')
+        // Create delayed audio stream to sync with canvas latency
+        let combinedStream: MediaStream
+
+        try {
+          audioCtx = new AudioContext()
+          const source = audioCtx.createMediaElementSource(video)
+
+          // Add delay to audio to match canvas rendering latency (~150ms)
+          const delayNode = audioCtx.createDelay(0.5)
+          delayNode.delayTime.value = 0.15 // 150ms delay
+
+          const destination = audioCtx.createMediaStreamDestination()
+
+          source.connect(delayNode)
+          delayNode.connect(destination)
+          delayNode.connect(audioCtx.destination) // Also play through (muted anyway)
+
+          combinedStream = new MediaStream([
+            ...canvasStream.getVideoTracks(),
+            ...destination.stream.getAudioTracks()
+          ])
+
+          console.log('Canvas video + delayed audio stream created')
+        } catch (e) {
+          console.log('Audio delay failed, using video only:', e)
+          combinedStream = canvasStream
         }
 
         // Determine best codec
@@ -199,64 +227,67 @@ export function useVideoSplitter(): UseVideoSplitterReturn {
         }
 
         if (!selectedMimeType) {
-          throw new Error('No supported video format for MediaRecorder')
+          throw new Error('No supported video format')
         }
 
-        console.log(`MediaRecorder using: ${selectedMimeType}`)
+        console.log(`MediaRecorder: ${selectedMimeType}, tracks: ${combinedStream.getTracks().length}`)
 
         const chunks: Blob[] = []
-        const recorder = new MediaRecorder(stream, {
+        const recorder = new MediaRecorder(combinedStream, {
           mimeType: selectedMimeType,
-          videoBitsPerSecond: 2500000, // 2.5 Mbps
-          audioBitsPerSecond: 128000,  // 128 kbps audio
+          videoBitsPerSecond: 2000000,
+          audioBitsPerSecond: 128000,
         })
 
         recorder.ondataavailable = (e) => {
-          if (e.data.size > 0) {
-            chunks.push(e.data)
-          }
+          if (e.data.size > 0) chunks.push(e.data)
         }
 
         recorder.onstop = () => {
           video.muted = true
-          const blob = new Blob(chunks, { type: selectedMimeType })
-          resolve(blob)
+          if (audioCtx) audioCtx.close()
+          resolve(new Blob(chunks, { type: selectedMimeType }))
         }
 
         recorder.onerror = (e) => {
           video.muted = true
+          if (audioCtx) audioCtx.close()
           reject(new Error('MediaRecorder error: ' + e))
         }
 
-        // Start recording BEFORE playing to ensure we capture from the start
+        // Start recording
         recorder.start(100)
 
-        // Small delay to ensure recorder is ready
-        await new Promise(res => setTimeout(res, 50))
-
         // Start playback
-        video.play()
+        await video.play()
 
-        // Monitor playback and stop at the right time
-        const checkTime = () => {
+        // Draw loop - uses requestAnimationFrame for smooth rendering
+        let animationId: number
+        const drawFrame = () => {
           if (video.paused || video.ended || video.currentTime >= startTime + duration) {
+            cancelAnimationFrame(animationId)
             video.pause()
-            recorder.stop()
+            setTimeout(() => recorder.stop(), 200) // Extra buffer for delayed audio
             return
           }
-          requestAnimationFrame(checkTime)
+
+          // Draw current video frame to canvas
+          ctx.drawImage(video, 0, 0, outputWidth, outputHeight)
+          animationId = requestAnimationFrame(drawFrame)
         }
-        checkTime()
+        drawFrame()
 
         // Fallback timeout
         setTimeout(() => {
           if (recorder.state === 'recording') {
+            cancelAnimationFrame(animationId)
             video.pause()
             recorder.stop()
           }
-        }, duration * 1000 + 1000)
+        }, duration * 1000 + 1500)
 
       } catch (error) {
+        if (audioCtx) audioCtx.close()
         reject(error)
       }
     })
