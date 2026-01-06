@@ -13,11 +13,11 @@
   <!-- Background rounded square -->
   <rect x="16" y="16" width="480" height="480" rx="96" fill="#0a0a12"/>
 
-  <!-- Video frame - diamond (rotated square) -->
-  <rect x="136" y="136" width="240" height="240" rx="24" fill="url(#grad1)" transform="rotate(45 256 256)"/>
+  <!-- Video frame - circle -->
+  <circle cx="256" cy="256" r="160" fill="url(#grad1)"/>
 
-  <!-- Screen area - inner diamond -->
-  <rect x="168" y="168" width="176" height="176" rx="12" fill="#0a0a12" transform="rotate(45 256 256)"/>
+  <!-- Screen area - inner circle -->
+  <circle cx="256" cy="256" r="120" fill="#0a0a12"/>
 
   <!-- Play button - centered -->
   <polygon points="230,216 230,296 300,256" fill="url(#grad2)"/>
