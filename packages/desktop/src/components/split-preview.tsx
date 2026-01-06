@@ -7,14 +7,6 @@ interface SplitPreviewProps {
   totalDuration: number
 }
 
-// Pop/bubble spring - high stiffness, low damping for snappy overshoot
-const popSpring = {
-  type: 'spring' as const,
-  stiffness: 500,
-  damping: 15,
-  mass: 0.5,
-}
-
 const bouncySpring = {
   type: 'spring' as const,
   stiffness: 300,
@@ -69,11 +61,8 @@ export function SplitPreview({ segments, totalDuration }: SplitPreviewProps) {
             ]
 
             return (
-              <motion.div
+              <div
                 key={segment.index}
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ ...popSpring, delay: Math.min(index * 0.04, 0.2) }}
                 style={{ width: `${widthPercent}%` }}
                 className={cn(
                   'segment-bar',
@@ -85,16 +74,11 @@ export function SplitPreview({ segments, totalDuration }: SplitPreviewProps) {
                 )}
               >
                 {widthPercent > 6 && (
-                  <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 + index * 0.05 }}
-                    className="text-sm font-bold text-white/90 drop-shadow-md"
-                  >
+                  <span className="text-sm font-bold text-white/90 drop-shadow-md">
                     {index + 1}
-                  </motion.span>
+                  </span>
                 )}
-              </motion.div>
+              </div>
             )
           })}
         </div>
