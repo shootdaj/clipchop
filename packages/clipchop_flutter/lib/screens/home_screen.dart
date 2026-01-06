@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../theme/app_theme.dart';
 import '../services/video_state.dart';
 import '../widgets/gradient_text.dart';
@@ -388,26 +389,43 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildFooter() {
-    return Column(
-      children: [
-        Text(
-          '⚡ Native App - GPU Accelerated',
-          style: TextStyle(
-            fontSize: 14,
-            color: AppColors.textMuted.withValues(alpha: 0.5),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'All processing happens on your device.',
-          style: TextStyle(
-            fontSize: 12,
-            color: AppColors.textMuted.withValues(alpha: 0.4),
-          ),
-        ),
-      ],
-    )
-        .animate(delay: 600.ms)
-        .fadeIn(duration: 400.ms);
+    return FutureBuilder<PackageInfo>(
+      future: PackageInfo.fromPlatform(),
+      builder: (context, snapshot) {
+        final version = snapshot.hasData ? 'v${snapshot.data!.version}' : '';
+
+        return Column(
+          children: [
+            Text(
+              '⚡ Native App - GPU Accelerated',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textMuted.withValues(alpha: 0.5),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'All processing happens on your device.',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textMuted.withValues(alpha: 0.4),
+              ),
+            ),
+            if (version.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                version,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textMuted.withValues(alpha: 0.3),
+                ),
+              ),
+            ],
+          ],
+        )
+            .animate(delay: 600.ms)
+            .fadeIn(duration: 400.ms);
+      },
+    );
   }
 }

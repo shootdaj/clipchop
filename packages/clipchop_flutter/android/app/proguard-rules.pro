@@ -32,6 +32,9 @@
 # Path Provider
 -keep class io.flutter.plugins.pathprovider.** { *; }
 
+# Package Info Plus
+-keep class dev.fluttercommunity.plus.packageinfo.** { *; }
+
 # Keep native methods
 -keepclasseswithmembers class * {
     native <methods>;

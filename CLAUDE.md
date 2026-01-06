@@ -2,7 +2,7 @@
 
 Video splitter app that cuts videos into smaller durations for social media (Instagram, TikTok, etc.)
 
-**Last Updated**: 2026-01-07 (Session 11) - Flutter Android App, Cleanup
+**Last Updated**: 2026-01-07 (Session 12) - v3.0.0 Major Release, ProGuard Fix, Cross-Platform Sync
 
 **Latest Release**: https://github.com/shootdaj/clipchop/releases
 
@@ -81,7 +81,7 @@ bun run test:e2e:smoke # Smoke tests (must pass)
 
 ---
 
-## Current Status (v2.0.0 Stable - Jan 6, 2026)
+## Current Status (v3.0.0 - Jan 7, 2026)
 
 ### What's Working
 
@@ -101,8 +101,9 @@ bun run test:e2e:smoke # Smoke tests (must pass)
 - Mobile browsers: FFmpeg.wasm (handles VFR videos properly)
 - Download functionality via blob URLs
 - Version display in footer
+- **NEW**: Native app download banner (prompts users to get 20x faster native app)
 
-**Mobile Support (v2.0.0 NEW)**:
+**Mobile Support**:
 - FFmpeg.wasm with background pre-loading
 - Download progress tracking (MB downloaded/total)
 - Mobile-optimized encoding (720p max, ultrafast preset)
@@ -113,7 +114,7 @@ bun run test:e2e:smoke # Smoke tests (must pass)
 - E2E tests (Playwright)
 - Smoke tests for quick iteration (~7s)
 
-**Flutter Android App (NEW)**:
+**Flutter Android App (v3.0.0 STABLE)**:
 - Native Flutter app at `packages/clipchop_flutter`
 - Uses `ffmpeg_kit_flutter_new` (community fork, actively maintained)
 - Full native FFmpeg with hardware acceleration
@@ -121,6 +122,8 @@ bun run test:e2e:smoke # Smoke tests (must pass)
 - **APK Download**: Available on [GitHub Releases](https://github.com/shootdaj/clipchop/releases)
 - Auto-built via GitHub Actions on each release
 - Manual build: `cd packages/clipchop_flutter && flutter build apk --release`
+- **ProGuard fix**: Release builds now work correctly (plugin code preserved)
+- **Version display**: Shows app version in footer
 
 ### Known Limitations
 
@@ -225,7 +228,7 @@ bun run test:all       # Everything
 
 - **Web App**: https://desktop-seven-lake.vercel.app
 - **Desktop Releases**: https://github.com/shootdaj/clipchop/releases
-- **Stable v2.0.0**: https://github.com/shootdaj/clipchop/releases/tag/v2.0.0
+- **Stable v3.0.0**: https://github.com/shootdaj/clipchop/releases/tag/v3.0.0
 
 ### CI/CD (GitHub Actions)
 
@@ -301,6 +304,7 @@ git checkout v1.6.15  # Checkout specific version
 
 | Session | Date | Changes |
 |---------|------|---------|
+| 12 | 2026-01-07 | **v3.0.0 Major Release**: ProGuard fix for Flutter release builds, native app download banner on web, cross-platform content sync, version display in Flutter |
 | 11 | 2026-01-07 | Elapsed time display, cleanup deprecated React Native |
 | 10 | 2026-01-06 | Flutter Android app, native FFmpeg, CI/CD for APK |
 | 9 | 2026-01-06 | FFmpeg.wasm mobile fix, v2.0.0 stable release |
@@ -349,6 +353,16 @@ echo "https://your-url.com" | npx qrcode-terminal
 - This means it's running in dev mode
 - Production builds get version from git tags
 
+### Flutter Release Build: MissingPluginException
+- **Cause**: R8/ProGuard stripping plugin native code during minification
+- **Fix**: Add keep rules in `android/app/proguard-rules.pro`:
+  ```
+  -keep class com.mr.flutter.plugin.filepicker.** { *; }
+  -keep class com.arthenica.** { *; }
+  ```
+- **Full rules**: See `packages/clipchop_flutter/android/app/proguard-rules.pro`
+- **Debug vs Release**: Debug builds work fine; only release builds need ProGuard rules
+
 ---
 
 ## Contributing
@@ -370,4 +384,4 @@ MIT
 
 **Repository**: https://github.com/shootdaj/clipchop
 **Live Demo**: https://desktop-seven-lake.vercel.app
-**Stable Release**: v2.0.0
+**Stable Release**: v3.0.0

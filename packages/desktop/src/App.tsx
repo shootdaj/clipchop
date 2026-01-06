@@ -9,6 +9,7 @@ import { SplitPreview } from '@/components/split-preview'
 import { BrowserCompatibility } from '@/components/browser-compatibility'
 import { InstallPrompt } from '@/components/install-prompt'
 import { MobileWarning } from '@/components/mobile-warning'
+import { NativeAppBanner } from '@/components/native-app-banner'
 import { useVideoSplitter } from '@/hooks/use-video-splitter-hybrid'
 import { cn } from '@/lib/utils'
 
@@ -131,6 +132,7 @@ function App() {
     <>
       <InstallPrompt />
       <MobileWarning />
+      <NativeAppBanner />
       <div className="min-h-screen gradient-bg p-4 md:p-8 relative overflow-hidden">
       {/* Animated floating orbs - using CSS animations for better performance */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
@@ -302,7 +304,9 @@ function App() {
                       )}
                       {!maxResolution && Math.max(metadata.width, metadata.height) > 1920 && (
                         <p className="text-amber-500">
-                          ⚠️ 4K encoding is very slow in browsers. Consider using HD or SD for faster results.
+                          {window.electron
+                            ? '⚠️ 4K encoding uses more resources. Consider HD or SD for faster results.'
+                            : '⚠️ 4K encoding is very slow in browsers. Download the native app for 20x faster processing, or use HD/SD.'}
                         </p>
                       )}
                       <p className="text-muted-foreground/70">

@@ -44,6 +44,9 @@ dependencies:
   # Image/video thumbnail
   video_thumbnail: ^0.5.3
 
+  # Package info for version display
+  package_info_plus: ^8.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
