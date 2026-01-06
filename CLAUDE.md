@@ -97,13 +97,14 @@ bun run test:e2e:smoke # Smoke tests (must pass)
 - E2E tests (Playwright)
 - Smoke tests for quick iteration (~7s)
 
-**Flutter Android App (NEW - Session 10)**:
+**Flutter Android App (NEW)**:
 - Native Flutter app at `packages/clipchop_flutter`
 - Uses `ffmpeg_kit_flutter_new` (community fork, actively maintained)
-- Full native FFmpeg with GPU acceleration
+- Full native FFmpeg with hardware acceleration
 - Matches web app UI (dark purple/amber theme, 3D cards)
-- APK: `~/Downloads/clipchop-flutter.apk` (214MB)
-- To build: `cd packages/clipchop_flutter && flutter build apk --release`
+- **APK Download**: Available on [GitHub Releases](https://github.com/shootdaj/clipchop/releases)
+- Auto-built via GitHub Actions on each release
+- Manual build: `cd packages/clipchop_flutter && flutter build apk --release`
 
 ### Known Limitations
 
