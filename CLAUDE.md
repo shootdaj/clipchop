@@ -2,9 +2,9 @@
 
 Video splitter app that cuts videos into smaller durations for social media (Instagram, TikTok, etc.)
 
-**Last Updated**: 2026-01-06 (Session 9) - Mobile FFmpeg.wasm Fix, Stable v2.0.0 Release
+**Last Updated**: 2026-01-07 (Session 11) - Flutter Android App, Cleanup
 
-**Stable Release**: v2.0.0 - https://github.com/shootdaj/clipchop/releases/tag/v2.0.0
+**Latest Release**: https://github.com/shootdaj/clipchop/releases
 
 ---
 
@@ -23,6 +23,9 @@ cd packages/desktop && bun run dev
 
 # Run desktop (Electron) version
 cd packages/desktop && bun run electron:dev
+
+# Run Flutter Android (requires Flutter SDK)
+cd packages/clipchop_flutter && flutter run
 ```
 
 **Live Demo**: https://desktop-seven-lake.vercel.app
@@ -216,7 +219,10 @@ bun run test:all       # Everything
 All handled by `.github/workflows/release.yml`:
 - Semantic versioning from commit messages
 - Electron builds for macOS/Windows/Linux
+- Flutter APK build for Android
 - Vercel deployment with pre-built assets
+
+All artifacts uploaded to GitHub Releases automatically.
 
 ### Commit Message Conventions
 
@@ -282,11 +288,11 @@ git checkout v1.6.15  # Checkout specific version
 
 | Session | Date | Changes |
 |---------|------|---------|
+| 11 | 2026-01-07 | Elapsed time display, cleanup deprecated React Native |
+| 10 | 2026-01-06 | Flutter Android app, native FFmpeg, CI/CD for APK |
 | 9 | 2026-01-06 | FFmpeg.wasm mobile fix, v2.0.0 stable release |
 | 8 | 2026-01-05 | Unified CI/CD, version display fix |
 | 7 | 2026-01-05 | Audio sync fix, E2E tests |
-| 6 | 2026-01-05 | Video preview, animation fixes |
-| 5 | 2026-01-04 | Electron conversion, 20-30x speedup |
 
 For full history, see `PROGRESS.md`
 
