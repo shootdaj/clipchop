@@ -1,0 +1,55 @@
+name: clipchop_flutter
+description: "Split videos for social media - Fast native FFmpeg video splitter"
+publish_to: 'none'
+version: 2.0.0+1
+
+environment:
+  sdk: ^3.8.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # FFmpeg for native video processing (community fork, actively maintained)
+  ffmpeg_kit_flutter_new: ^4.1.0
+
+  # File picking
+  file_picker: ^8.0.0+1
+
+  # Video player for preview
+  video_player: ^2.9.2
+
+  # Path utilities
+  path_provider: ^2.1.4
+  path: ^1.9.0
+
+  # Permissions
+  permission_handler: ^11.3.1
+
+  # State management
+  provider: ^6.1.2
+
+  # Animations
+  flutter_animate: ^4.5.0
+
+  # Icons
+  cupertino_icons: ^1.0.8
+
+  # Share functionality
+  share_plus: ^9.0.0
+
+  # UUID for unique filenames
+  uuid: ^4.4.2
+
+  # Image/video thumbnail
+  video_thumbnail: ^0.5.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
