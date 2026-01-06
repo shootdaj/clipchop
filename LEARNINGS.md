@@ -315,6 +315,103 @@ Mobile Chrome has:
 
 ---
 
+## What Is FFmpeg and Why Is It Special?
+
+### FFmpeg.wasm = Exact Same Code
+
+```
+FFmpeg (C source code, 1M+ lines)
+              ↓
+      Emscripten compiler
+              ↓
+FFmpeg.wasm (WebAssembly binary)
+```
+
+FFmpeg.wasm is literally FFmpeg's C source code compiled to WebAssembly. Same algorithms, same logic, same 24 years of bug fixes. Just slower because WebAssembly can't access:
+- CPU-specific optimizations (SSE, AVX, NEON assembly)
+- GPU hardware encoders
+- Direct memory management
+
+---
+
+### Why Is FFmpeg So Successful?
+
+**1. It's old (started 2000)**
+
+24 years of:
+- Bug fixes for every edge case
+- Support for every format ever created
+- Performance optimizations
+- Contributions from thousands of developers
+
+**2. Created by a genius**
+
+Fabrice Bellard started FFmpeg. He also created:
+- QEMU (powers Docker, Android Emulator)
+- JSLinux (Linux running in JavaScript)
+- Computed world-record digits of Pi
+
+**3. Handles everything**
+
+| Category | Count | Examples |
+|----------|-------|----------|
+| Container formats | 100+ | MP4, MKV, AVI, MOV, WebM, FLV |
+| Video codecs | 100+ | H.264, H.265, VP9, AV1, MPEG-2 |
+| Audio codecs | 100+ | AAC, MP3, Opus, FLAC, AC3 |
+
+Plus: broken files, non-standard streams, partial downloads, VFR, HDR, 10-bit color, every edge case imaginable.
+
+**4. Battle-tested at scale**
+
+Used by YouTube, Netflix, Facebook, Instagram, Twitch, Spotify for processing billions of videos. When that many files flow through your code, you find and fix every bug.
+
+---
+
+### Do Professional Tools Use FFmpeg?
+
+**Big commercial tools: Mostly no**
+
+| Software | Uses FFmpeg? | Instead Uses |
+|----------|--------------|--------------|
+| DaVinci Resolve | ❌ | Blackmagic proprietary engine |
+| Premiere Pro | ❌ | Adobe Mercury Playback Engine |
+| Final Cut Pro | ❌ | Apple AVFoundation |
+| After Effects | ❌ | Adobe Media Core |
+| Avid Media Composer | ❌ | Avid DNxHD engine |
+
+**Open source and backend: Yes**
+
+| Software | Uses FFmpeg? |
+|----------|--------------|
+| VLC Player | ✅ |
+| HandBrake | ✅ |
+| OBS Studio | ✅ |
+| Kdenlive | ✅ |
+| Shotcut | ✅ |
+| YouTube (backend) | ✅ |
+| Netflix (encoding) | ✅ |
+| Twitch | ✅ |
+
+**Why don't the big tools use FFmpeg?**
+
+1. **Deep GPU integration** - Resolve, Premiere need real-time playback with effects. FFmpeg is batch-processing focused.
+
+2. **Licensing** - FFmpeg is LGPL/GPL. Companies want full proprietary control.
+
+3. **Specialized features** - Pro tools need timelines, color grading, plugins. FFmpeg is just transcode.
+
+4. **Custom optimization** - Apple, Adobe, Blackmagic optimize for their specific hardware.
+
+**Why DO backend services use FFmpeg?**
+
+1. Free and open source
+2. Handles every possible user-uploaded format
+3. Easy to script (CLI-based)
+4. 24 years of reliability
+5. Good enough performance with GPU flags
+
+---
+
 ## Why Video Tooling Is So Fragmented
 
 ### "Video is video, right?" - Not quite.
