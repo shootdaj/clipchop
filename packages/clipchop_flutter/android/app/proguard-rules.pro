@@ -35,9 +35,6 @@
 # Package Info Plus
 -keep class dev.fluttercommunity.plus.packageinfo.** { *; }
 
-# Receive Sharing Intent
--keep class com.kasem.receive_sharing_intent.** { *; }
-
 # Keep native methods
 -keepclasseswithmembers class * {
     native <methods>;

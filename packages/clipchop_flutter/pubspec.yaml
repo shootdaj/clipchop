@@ -47,9 +47,6 @@ dependencies:
   # Package info for version display
   package_info_plus: ^8.0.0
 
-  # Receive shared files from other apps
-  receive_sharing_intent: ^1.8.1
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
