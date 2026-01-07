@@ -22,17 +22,9 @@ subprojects {
 // Force consistent Kotlin JVM target across all subprojects
 subprojects {
     afterEvaluate {
-        if (project.hasProperty("android")) {
-            project.extensions.findByType(com.android.build.gradle.BaseExtension::class.java)?.apply {
-                compileOptions {
-                    sourceCompatibility = JavaVersion.VERSION_1_8
-                    targetCompatibility = JavaVersion.VERSION_1_8
-                }
-            }
-        }
         tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-            kotlinOptions {
-                jvmTarget = "1.8"
+            compilerOptions {
+                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
             }
         }
     }
