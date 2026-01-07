@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:video_player/video_player.dart';
+import 'package:share_plus/share_plus.dart';
 import '../theme/app_theme.dart';
 import 'card_3d.dart';
 
@@ -10,7 +11,9 @@ class VideoPreview extends StatefulWidget {
   final String filePath;
   final String? title;
   final VoidCallback? onDownload;
+  final VoidCallback? onShare;
   final bool showDownload;
+  final bool showShare;
   final bool compact;
 
   const VideoPreview({
@@ -18,7 +21,9 @@ class VideoPreview extends StatefulWidget {
     required this.filePath,
     this.title,
     this.onDownload,
+    this.onShare,
     this.showDownload = true,
+    this.showShare = false,
     this.compact = false,
   });
 
@@ -62,6 +67,18 @@ class _VideoPreviewState extends State<VideoPreview> {
     final minutes = duration.inMinutes;
     final seconds = duration.inSeconds % 60;
     return '$minutes:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _shareVideo() async {
+    try {
+      final file = XFile(widget.filePath);
+      await Share.shareXFiles(
+        [file],
+        text: widget.title,
+      );
+    } catch (e) {
+      debugPrint('Error sharing video: $e');
+    }
   }
 
   @override
@@ -149,25 +166,51 @@ class _VideoPreviewState extends State<VideoPreview> {
                         ),
                       ),
 
-                    // Download button
-                    if (widget.showDownload && widget.onDownload != null && !_hasError)
+                    // Action buttons (share + download)
+                    if (!_hasError)
                       Positioned(
                         top: 8,
                         right: 8,
-                        child: GestureDetector(
-                          onTap: widget.onDownload,
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.6),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.download,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Share button
+                            if (widget.showShare)
+                              GestureDetector(
+                                onTap: widget.onShare ?? () => _shareVideo(),
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.6),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.share,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            if (widget.showShare && widget.showDownload && widget.onDownload != null)
+                              const SizedBox(width: 6),
+                            // Download button
+                            if (widget.showDownload && widget.onDownload != null)
+                              GestureDetector(
+                                onTap: widget.onDownload,
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.6),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.download,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
 
@@ -278,6 +321,7 @@ class VideoPreviewGrid extends StatelessWidget {
   final List<String> filePaths;
   final List<String>? titles;
   final Function(int index)? onDownload;
+  final Function(int index)? onShare;
   final VoidCallback? onDownloadAll;
 
   const VideoPreviewGrid({
@@ -285,6 +329,7 @@ class VideoPreviewGrid extends StatelessWidget {
     required this.filePaths,
     this.titles,
     this.onDownload,
+    this.onShare,
     this.onDownloadAll,
   });
 
@@ -362,6 +407,8 @@ class VideoPreviewGrid extends StatelessWidget {
                     ? titles![index]
                     : 'Clip ${index + 1}',
                 compact: true,
+                showShare: true,
+                onShare: onShare != null ? () => onShare!(index) : null,
                 onDownload: onDownload != null ? () => onDownload!(index) : null,
               )
                   .animate(delay: Duration(milliseconds: index * 50))

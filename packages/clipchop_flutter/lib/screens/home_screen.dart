@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:share_plus/share_plus.dart';
 import '../theme/app_theme.dart';
 import '../services/video_state.dart';
 import '../widgets/gradient_text.dart';
@@ -308,6 +309,22 @@ class HomeScreen extends StatelessWidget {
           VideoPreviewGrid(
             filePaths: state.outputPaths,
             titles: state.segments.map((s) => s.filename).toList(),
+            onShare: (index) async {
+              try {
+                final file = XFile(state.outputPaths[index]);
+                await Share.shareXFiles(
+                  [file],
+                  text: state.segments[index].filename,
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to share: $e'),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              }
+            },
             onDownload: (index) {
               // TODO: Implement save to gallery
               ScaffoldMessenger.of(context).showSnackBar(
