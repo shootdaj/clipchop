@@ -1,9 +1,74 @@
 # Clipchop - Implementation Progress
 
-## Current Status: v2.0.0 Stable Release + Flutter Android App
-**Last Updated**: 2026-01-06 (Session 10) - Flutter Android Native App
+## Current Status: v3.3.0 Stable Release + Native Share Intent
+**Last Updated**: 2026-01-09 (Session 13) - Native Share Intent Handling
 
-**Stable Release**: v2.0.0 - Tag this version to revert if needed
+**Stable Release**: v3.3.0 - Tag this version to revert if needed
+
+---
+
+## Session 13 (2026-01-09) - Native Share Intent Handling
+
+### Problem:
+Users wanted to share videos FROM Gallery/Photos TO Clipchop to open and split them.
+
+### Attempted Solutions:
+1. **`receive_sharing_intent`** - JVM compatibility issues (Kotlin 17 vs Java 1.8)
+2. **`share_handler`** - App opened via intent but didn't receive video data
+3. **`flutter_sharing_intent` v2.0.4** - Plugin crashed during registration trying to create thumbnails
+
+### Final Solution: Native Kotlin Implementation
+Bypassed all buggy third-party packages with custom native code in `MainActivity.kt`:
+
+#### How it works:
+1. `onCreate()` and `onNewIntent()` call `handleIntent()`
+2. `handleIntent()` checks for `ACTION_SEND` with `video/*` MIME type
+3. `copyUriToCache()` copies the shared content URI to app's cache directory (bypasses Android scoped storage)
+4. File path sent to Flutter via `EventChannel`
+5. Flutter's `_videoState.loadVideo(path)` loads the video
+
+#### Files Modified:
+- `android/app/src/main/kotlin/.../MainActivity.kt` - Added native intent handling
+- `lib/main.dart` - Listen to native EventChannel instead of buggy package
+- `pubspec.yaml` - Removed `flutter_sharing_intent` dependency
+- `android/app/proguard-rules.pro` - Cleaned up unused rules
+
+#### Key Code (MainActivity.kt):
+```kotlin
+private fun handleIntent(intent: Intent?) {
+    if (intent?.action == Intent.ACTION_SEND && intent.type?.startsWith("video/") == true) {
+        val uri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+        copyUriToCache(uri)?.let { path ->
+            eventSink?.success(path)  // Send to Flutter
+        }
+    }
+}
+
+private fun copyUriToCache(uri: Uri): String? {
+    val inputStream = contentResolver.openInputStream(uri) ?: return null
+    val outputFile = File(cacheDir, "shared_videos/shared_video_${System.currentTimeMillis()}.mp4")
+    FileOutputStream(outputFile).use { inputStream.copyTo(it) }
+    return outputFile.absolutePath
+}
+```
+
+#### Key Code (main.dart):
+```dart
+static const _shareChannel = EventChannel('com.clipchop/share_intent');
+
+void _initShareListener() {
+    _shareSubscription = _shareChannel.receiveBroadcastStream().listen((path) {
+        if (path != null && path is String) {
+            _videoState.loadVideo(path);
+        }
+    });
+}
+```
+
+### Release:
+- **Version**: v3.3.0
+- **APK**: https://github.com/shootdaj/clipchop/releases/tag/v3.3.0
+- **Features**: Receive videos from Gallery/Photos, share split clips to Instagram/TikTok
 
 ---
 

@@ -2,9 +2,9 @@
 
 Video splitter app that cuts videos into smaller durations for social media (Instagram, TikTok, etc.)
 
-**Last Updated**: 2026-01-07 (Session 12) - v3.0.0 Major Release, ProGuard Fix, Cross-Platform Sync
+**Last Updated**: 2026-01-09 (Session 13) - v3.3.0 Native Share Intent Handling
 
-**Latest Release**: https://github.com/shootdaj/clipchop/releases
+**Latest Release**: https://github.com/shootdaj/clipchop/releases/tag/v3.3.0
 
 ---
 
@@ -81,7 +81,7 @@ bun run test:e2e:smoke # Smoke tests (must pass)
 
 ---
 
-## Current Status (v3.0.0 - Jan 7, 2026)
+## Current Status (v3.3.0 - Jan 9, 2026)
 
 ### What's Working
 
@@ -101,7 +101,7 @@ bun run test:e2e:smoke # Smoke tests (must pass)
 - Mobile browsers: FFmpeg.wasm (handles VFR videos properly)
 - Download functionality via blob URLs
 - Version display in footer
-- **NEW**: Native app download banner (prompts users to get 20x faster native app)
+- Native app download banner (prompts users to get 20x faster native app)
 
 **Mobile Support**:
 - FFmpeg.wasm with background pre-loading
@@ -114,16 +114,17 @@ bun run test:e2e:smoke # Smoke tests (must pass)
 - E2E tests (Playwright)
 - Smoke tests for quick iteration (~7s)
 
-**Flutter Android App (v3.0.0 STABLE)**:
+**Flutter Android App (v3.3.0 STABLE)**:
 - Native Flutter app at `packages/clipchop_flutter`
 - Uses `ffmpeg_kit_flutter_new` (community fork, actively maintained)
 - Full native FFmpeg with hardware acceleration
 - Matches web app UI (dark purple/amber theme, 3D cards)
-- **APK Download**: Available on [GitHub Releases](https://github.com/shootdaj/clipchop/releases)
-- Auto-built via GitHub Actions on each release
+- **APK Download**: Available on [GitHub Releases](https://github.com/shootdaj/clipchop/releases/tag/v3.3.0)
 - Manual build: `cd packages/clipchop_flutter && flutter build apk --release`
 - **ProGuard fix**: Release builds now work correctly (plugin code preserved)
 - **Version display**: Shows app version in footer
+- **NEW: Receive shared videos**: Share videos from Gallery/Photos to Clipchop to open and split them
+- **Share to social**: Share split clips directly to Instagram, TikTok, etc.
 
 ### Known Limitations
 
@@ -228,7 +229,7 @@ bun run test:all       # Everything
 
 - **Web App**: https://desktop-seven-lake.vercel.app
 - **Desktop Releases**: https://github.com/shootdaj/clipchop/releases
-- **Stable v3.0.0**: https://github.com/shootdaj/clipchop/releases/tag/v3.0.0
+- **Stable v3.3.0**: https://github.com/shootdaj/clipchop/releases/tag/v3.3.0
 
 ### CI/CD (GitHub Actions)
 
@@ -304,6 +305,7 @@ git checkout v1.6.15  # Checkout specific version
 
 | Session | Date | Changes |
 |---------|------|---------|
+| 13 | 2026-01-09 | **v3.3.0**: Native share intent handling - receive videos from Gallery/Photos, share split clips to social media |
 | 12 | 2026-01-07 | **v3.0.0 Major Release**: ProGuard fix for Flutter release builds, native app download banner on web, cross-platform content sync, version display in Flutter |
 | 11 | 2026-01-07 | Elapsed time display, cleanup deprecated React Native |
 | 10 | 2026-01-06 | Flutter Android app, native FFmpeg, CI/CD for APK |
@@ -384,4 +386,4 @@ MIT
 
 **Repository**: https://github.com/shootdaj/clipchop
 **Live Demo**: https://desktop-seven-lake.vercel.app
-**Stable Release**: v3.0.0
+**Stable Release**: v3.3.0
