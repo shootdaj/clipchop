@@ -41,6 +41,7 @@ jobs:
         id: semantic
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Check if a forced version was provided
           FORCE_VERSION="${{ inputs.force_version }}"
@@ -48,15 +49,43 @@ jobs:
             echo "Using forced version: $FORCE_VERSION"
             echo "new_release_published=true" >> $GITHUB_OUTPUT
             echo "new_release_version=$FORCE_VERSION" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Run semantic-release
+          npx semantic-release
+
+          # Check if a new release was created
+          if [ -f .semantic-release-version ]; then
+            echo "new_release_published=true" >> $GITHUB_OUTPUT
+            echo "new_release_version=$(cat .semantic-release-version)" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # No new release from semantic-release - check if latest release is missing builds
+          echo "No new semantic-release version. Checking if latest release needs builds..."
+
+          # Get latest release info
+          LATEST_RELEASE=$(gh release list --limit 1 --json tagName,assets -q '.[0]')
+          if [ -z "$LATEST_RELEASE" ] || [ "$LATEST_RELEASE" = "null" ]; then
+            echo "No releases found"
+            echo "new_release_published=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          LATEST_TAG=$(echo "$LATEST_RELEASE" | jq -r '.tagName')
+          LATEST_VERSION="${LATEST_TAG#v}"
+
+          # Check if release has Electron assets (look for .dmg, .exe, or .AppImage)
+          HAS_ELECTRON=$(echo "$LATEST_RELEASE" | jq '[.assets[].name | select(test("\\.(dmg|exe|AppImage)$"))] | length')
+
+          if [ "$HAS_ELECTRON" = "0" ]; then
+            echo "Latest release $LATEST_TAG is missing Electron builds. Triggering builds..."
+            echo "new_release_published=true" >> $GITHUB_OUTPUT
+            echo "new_release_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
           else
-            npx semantic-release
-            # Check if a new release was created
-            if [ -f .semantic-release-version ]; then
-              echo "new_release_published=true" >> $GITHUB_OUTPUT
-              echo "new_release_version=$(cat .semantic-release-version)" >> $GITHUB_OUTPUT
-            else
-              echo "new_release_published=false" >> $GITHUB_OUTPUT
-            fi
+            echo "Latest release $LATEST_TAG already has Electron builds ($HAS_ELECTRON assets)"
+            echo "new_release_published=false" >> $GITHUB_OUTPUT
           fi
 
   build-electron:
