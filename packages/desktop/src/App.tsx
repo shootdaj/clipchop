@@ -1,3 +1,4 @@
+// Clipchop - Video splitter for social media
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { VideoUploader } from '@/components/video-uploader'
