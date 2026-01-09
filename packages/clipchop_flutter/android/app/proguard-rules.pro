@@ -39,6 +39,3 @@
 -keepclasseswithmembers class * {
     native <methods>;
 }
-
-# Flutter Sharing Intent
--keep class com.bhikadia.flutter_sharing_intent.** { *; }
