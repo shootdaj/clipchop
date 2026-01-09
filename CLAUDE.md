@@ -58,29 +58,9 @@ To deploy: Just `git push origin master`
 
 ### ⚠️ CRITICAL: Never Manually Create Tags or Releases
 
-**NEVER use `git tag` or `gh release create` manually.** This breaks the build system!
+**NEVER use `git tag` or `gh release create` manually.** This breaks the build system.
 
-**Why**: The workflow uses `semantic-release` to create tags. If a tag already exists:
-- semantic-release skips publishing
-- `new_release_published` outputs `false`
-- Electron/Flutter builds are skipped
-- Release has no downloadable apps
-
-**Correct way to release**:
-```bash
-git commit -m "feat: your feature"   # Triggers minor version bump
-git commit -m "fix: your fix"        # Triggers patch version bump
-git push origin master               # Builds everything automatically
-```
-
-**If builds were skipped** (tag was created manually):
-1. Delete the tag: `gh release delete vX.Y.Z --yes && git push origin --delete vX.Y.Z`
-2. Push an empty commit: `git commit --allow-empty -m "chore: trigger rebuild"`
-3. Push: `git push origin master`
-
-**Or use manual workflow dispatch**:
-- Go to Actions → Release → Run workflow
-- Enter `force_version` (e.g., `3.3.0`) to rebuild without semantic-release
+`semantic-release` creates tags automatically based on commit messages. If a tag already exists, it skips and builds won't run.
 
 ## PRE-COMMIT TESTING REQUIREMENT
 
