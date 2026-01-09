@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_sharing_intent/flutter_sharing_intent.dart';
-import 'package:flutter_sharing_intent/model/shared_file.dart';
+import 'package:flutter_sharing_intent/model/sharing_file.dart';
 import 'theme/app_theme.dart';
 import 'services/video_state.dart';
 import 'screens/home_screen.dart';

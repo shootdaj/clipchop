@@ -39,7 +39,7 @@ dependencies:
   share_plus: ^9.0.0
 
   # Receive shared files from other apps
-  flutter_sharing_intent: ^1.1.1
+  flutter_sharing_intent: ^2.0.4
 
   # UUID for unique filenames
   uuid: ^4.4.2
