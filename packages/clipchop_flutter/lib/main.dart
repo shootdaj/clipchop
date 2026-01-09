@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_sharing_intent/flutter_sharing_intent.dart';
-import 'package:flutter_sharing_intent/model/sharing_file.dart';
+import 'package:flutter_sharing_intent/model/shared_file.dart';
 import 'theme/app_theme.dart';
 import 'services/video_state.dart';
 import 'screens/home_screen.dart';
@@ -39,7 +39,7 @@ class ClipchopApp extends StatefulWidget {
 
 class _ClipchopAppState extends State<ClipchopApp> {
   final VideoState _videoState = VideoState();
-  StreamSubscription<List<SharingFile>>? _sharingSubscription;
+  StreamSubscription<List<SharedFile>>? _sharingSubscription;
 
   @override
   void initState() {
@@ -56,7 +56,7 @@ class _ClipchopAppState extends State<ClipchopApp> {
     _sharingSubscription = FlutterSharingIntent.instance.getMediaStream().listen(_handleSharedFiles);
   }
 
-  void _handleSharedFiles(List<SharingFile> files) {
+  void _handleSharedFiles(List<SharedFile> files) {
     if (files.isEmpty) return;
 
     // Find the first video file
