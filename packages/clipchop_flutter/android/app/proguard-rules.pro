@@ -40,5 +40,5 @@
     native <methods>;
 }
 
-# Share Handler
--keep class com.shoutsocial.share_handler.** { *; }
+# Flutter Sharing Intent
+-keep class com.bhikadia.flutter_sharing_intent.** { *; }
