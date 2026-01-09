@@ -38,6 +38,9 @@ dependencies:
   # Share functionality
   share_plus: ^9.0.0
 
+  # Receive shared files from other apps
+  share_handler: ^0.0.25
+
   # UUID for unique filenames
   uuid: ^4.4.2
 

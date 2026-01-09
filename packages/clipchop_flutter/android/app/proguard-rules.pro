@@ -39,3 +39,6 @@
 -keepclasseswithmembers class * {
     native <methods>;
 }
+
+# Share Handler
+-keep class com.shoutsocial.share_handler.** { *; }
