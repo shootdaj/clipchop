@@ -1,9 +1,43 @@
 # Clipchop - Implementation Progress
 
-## Current Status: v3.3.0 Stable Release + Native Share Intent
-**Last Updated**: 2026-01-09 (Session 13) - Native Share Intent Handling
+## Current Status: v3.3.4 Stable Release
+**Last Updated**: 2026-01-09 (Session 14) - CI/CD Documentation & Hook
 
-**Stable Release**: v3.3.0 - Tag this version to revert if needed
+**Stable Release**: v3.3.4
+
+---
+
+## Session 14 (2026-01-09) - CI/CD Documentation & Release Workflow Fix
+
+### Problem:
+Electron builds were being skipped. Investigation revealed the v3.3.0 tag was manually created (via `gh release create`), which caused semantic-release to skip publishing and all builds to be skipped.
+
+### Root Cause:
+When semantic-release finds an existing tag, it analyzes "0 commits" since that tag and outputs `new_release_published=false`, causing all build jobs to be skipped.
+
+### Solution:
+1. **Don't manually create tags/releases** - let semantic-release handle everything
+2. **Added hook** to physically block manual release commands (`.claude/hooks/block-manual-releases.py`)
+3. **Documented the workflow** in CLAUDE.md with build times
+
+### How the Release Workflow Works:
+1. Push to master triggers GitHub Actions
+2. `release` job (23s): semantic-release creates tag + empty GitHub release
+3. Build jobs start in parallel:
+   - `build-electron` (Linux ~1m, Windows ~2.5m, macOS ~3m)
+   - `build-flutter` (~9.5m)
+   - `deploy-vercel` (~1.5m)
+4. Assets uploaded to release as each build finishes
+
+### Files Added/Modified:
+- `.claude/hooks/block-manual-releases.py` - Blocks `gh release create` and `git tag v*`
+- `.claude/settings.json` - Hook configuration
+- `CLAUDE.md` - Added CI/CD documentation with build times
+
+### Key Learnings:
+- GitHub releases are created BEFORE builds (empty, with release notes)
+- Assets are attached as builds complete (not all at once)
+- semantic-release skips if tag exists → builds skip → no assets
 
 ---
 

@@ -2,9 +2,9 @@
 
 Video splitter app that cuts videos into smaller durations for social media (Instagram, TikTok, etc.)
 
-**Last Updated**: 2026-01-09 (Session 13) - v3.3.0 Native Share Intent Handling
+**Last Updated**: 2026-01-09 (Session 14) - v3.3.4 CI/CD Documentation
 
-**Latest Release**: https://github.com/shootdaj/clipchop/releases/tag/v3.3.0
+**Latest Release**: https://github.com/shootdaj/clipchop/releases/tag/v3.3.4
 
 ---
 
@@ -62,6 +62,8 @@ To deploy: Just `git push origin master`
 
 `semantic-release` creates tags automatically based on commit messages. If a tag already exists, it skips and builds won't run.
 
+**A hook is installed** (`.claude/hooks/block-manual-releases.py`) that blocks these commands.
+
 ## PRE-COMMIT TESTING REQUIREMENT
 
 **ALWAYS run and test locally before claiming to be finished:**
@@ -87,7 +89,7 @@ bun run test:e2e:smoke # Smoke tests (must pass)
 
 ---
 
-## Current Status (v3.3.0 - Jan 9, 2026)
+## Current Status (v3.3.4 - Jan 9, 2026)
 
 ### What's Working
 
@@ -120,12 +122,12 @@ bun run test:e2e:smoke # Smoke tests (must pass)
 - E2E tests (Playwright)
 - Smoke tests for quick iteration (~7s)
 
-**Flutter Android App (v3.3.0 STABLE)**:
+**Flutter Android App (v3.3.4 STABLE)**:
 - Native Flutter app at `packages/clipchop_flutter`
 - Uses `ffmpeg_kit_flutter_new` (community fork, actively maintained)
 - Full native FFmpeg with hardware acceleration
 - Matches web app UI (dark purple/amber theme, 3D cards)
-- **APK Download**: Available on [GitHub Releases](https://github.com/shootdaj/clipchop/releases/tag/v3.3.0)
+- **APK Download**: Available on [GitHub Releases](https://github.com/shootdaj/clipchop/releases/tag/v3.3.4)
 - Manual build: `cd packages/clipchop_flutter && flutter build apk --release`
 - **ProGuard fix**: Release builds now work correctly (plugin code preserved)
 - **Version display**: Shows app version in footer
@@ -235,17 +237,39 @@ bun run test:all       # Everything
 
 - **Web App**: https://desktop-seven-lake.vercel.app
 - **Desktop Releases**: https://github.com/shootdaj/clipchop/releases
-- **Stable v3.3.0**: https://github.com/shootdaj/clipchop/releases/tag/v3.3.0
+- **Stable v3.3.4**: https://github.com/shootdaj/clipchop/releases/tag/v3.3.4
 
 ### CI/CD (GitHub Actions)
 
-All handled by `.github/workflows/release.yml`:
-- Semantic versioning from commit messages
-- Electron builds for macOS/Windows/Linux
-- Flutter APK build for Android
-- Vercel deployment with pre-built assets
+All handled by `.github/workflows/release.yml`.
 
-All artifacts uploaded to GitHub Releases automatically.
+**How it works:**
+
+1. **`release` job (23s)**: Runs `semantic-release` which:
+   - Analyzes commits since last tag
+   - Creates new version tag (e.g., v3.3.4)
+   - Creates GitHub Release (empty, with release notes)
+   - Writes version to `.semantic-release-version` file
+
+2. **Build jobs (parallel)**: All start immediately after release job:
+   - `build-electron` (Linux, Windows, macOS) - builds in parallel
+   - `build-flutter` (Android APK)
+   - `deploy-vercel` (Web app)
+
+3. **Assets uploaded**: Each build uploads to the release as it finishes
+
+**Build Times (typical):**
+
+| Job | Duration |
+|-----|----------|
+| release (semantic-release) | ~23s |
+| deploy-vercel | ~1m 20s |
+| build-electron (Linux) | ~1m 15s |
+| build-electron (Windows) | ~2m 30s |
+| build-electron (macOS) | ~3m |
+| build-flutter (Android) | ~9m 30s |
+
+**Total: ~10 minutes** (limited by Flutter, others finish earlier)
 
 ### Commit Message Conventions
 
@@ -311,6 +335,7 @@ git checkout v1.6.15  # Checkout specific version
 
 | Session | Date | Changes |
 |---------|------|---------|
+| 14 | 2026-01-09 | **v3.3.4**: CI/CD documentation, hook to block manual releases, verified release workflow |
 | 13 | 2026-01-09 | **v3.3.0**: Native share intent handling - receive videos from Gallery/Photos, share split clips to social media |
 | 12 | 2026-01-07 | **v3.0.0 Major Release**: ProGuard fix for Flutter release builds, native app download banner on web, cross-platform content sync, version display in Flutter |
 | 11 | 2026-01-07 | Elapsed time display, cleanup deprecated React Native |
@@ -392,4 +417,4 @@ MIT
 
 **Repository**: https://github.com/shootdaj/clipchop
 **Live Demo**: https://desktop-seven-lake.vercel.app
-**Stable Release**: v3.3.0
+**Stable Release**: v3.3.4
